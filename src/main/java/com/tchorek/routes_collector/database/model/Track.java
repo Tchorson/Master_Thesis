@@ -33,10 +33,4 @@ public class Track {
                 ", date=" + date +
                 '}';
     }
-
-    public String prettyPrint() {
-        return "user with phone number " + phoneNumber +
-                " went nearby " + location +
-                " at " + Instant.ofEpochSecond(date);
-    }
 }

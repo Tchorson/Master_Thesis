@@ -21,5 +21,4 @@ public class TrackJSON {
         this.number = number;
         this.location = location;
     }
-
 }

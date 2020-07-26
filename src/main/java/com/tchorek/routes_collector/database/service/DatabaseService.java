@@ -4,7 +4,6 @@ import com.tchorek.routes_collector.database.model.Track;
 import com.tchorek.routes_collector.database.repositories.TrackRepository;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +21,6 @@ public class DatabaseService {
     Map<String, Long> lastUserActivity = new LinkedHashMap<>();
     Set<String> usersWithUnknownStatus = new LinkedHashSet<>();
 
-
     @Autowired
     public DatabaseService(TrackRepository trackRepository) {
         this.trackRepository = trackRepository;
@@ -34,8 +32,10 @@ public class DatabaseService {
     public void checkUsersActivity() {
         System.out.println("CHECKING USERS ACTIVITY AT TIME: "+Instant.now().toString());
         long currentTime = Instant.now().getEpochSecond();
-        Set<String> newUnknownUsers = lastUserActivity.entrySet().stream().filter(
-                userLastTrack -> currentTime - userLastTrack.getValue() > 360).map(Map.Entry::getKey).collect(Collectors.toSet());
+        Set<String> newUnknownUsers = lastUserActivity.entrySet().stream()
+                .filter(userLastTrack -> currentTime - userLastTrack.getValue() > 360)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
 
         usersWithUnknownStatus.clear();
         usersWithUnknownStatus.addAll(newUnknownUsers);
