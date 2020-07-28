@@ -27,10 +27,6 @@ public class Track {
 
     @Override
     public String toString() {
-        return "Track{" +
-                "phoneNumber='" + phoneNumber + '\'' +
-                ", location='" + location + '\'' +
-                ", date=" + date +
-                '}';
+        return phoneNumber + " " + location + " " + Instant.ofEpochSecond(date) +"\n";
     }
 }
