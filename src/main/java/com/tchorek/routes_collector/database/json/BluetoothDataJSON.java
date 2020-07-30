@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.database.model;
+package com.tchorek.routes_collector.database.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,17 +8,17 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class TrackJSON {
+public class BluetoothDataJSON {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private String number;
+    private String user;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String location;
 
     @JsonCreator
-    public TrackJSON(@JsonProperty("phoneNumber") String number,@JsonProperty("userLocation") String location) {
-        this.number = number;
+    public BluetoothDataJSON(@JsonProperty("user") String user, @JsonProperty("userLocation") String location) {
+        this.user = user;
         this.location = location;
     }
 }

@@ -18,22 +18,22 @@ public interface TrackRepository extends CrudRepository<Track,String> {
 
     @Query(value = "SELECT DISTINCT user_id FROM user_routes WHERE timestamp BETWEEN :startTimestamp AND :stopTimestamp AND device_id IN " +
             "(SELECT device_id FROM user_routes WHERE user_id = :userNumber)",nativeQuery = true)
-     List<String> getListOfUsersWhoMetUserRecently(@Param("userNumber") String phone_number, @Param("startTimestamp") long startTimestamp, @Param("stopTimestamp") long stopTimestamp);
+     List<String> getUsersWhoMetUserRecently(@Param("userNumber") String phone_number, @Param("startTimestamp") long startTimestamp, @Param("stopTimestamp") long stopTimestamp);
 
     @Modifying
     @Transactional
     @Query(value= "DELETE FROM user_routes WHERE user_id = :userNumber" ,nativeQuery = true)
-     void deleteUserHistory(@Param("userNumber") String number);
+     void deleteUserRoute(@Param("userNumber") String number);
 
     @Query(value = "SELECT user_id, timestamp, device_id FROM user_routes WHERE user_id = :userNumber", nativeQuery = true)
-     List<Track> getAllUserTracks(@Param("userNumber")String phoneNumber);
+     List<Track> getUserRoute(@Param("userNumber")String phoneNumber);
 
     @Query(value= "SELECT user_id, timestamp, device_id FROM user_routes WHERE user_id = :userNumber AND timestamp  BETWEEN :start AND :end", nativeQuery = true)
-    List<Track> getUserLocationsFromTimeInterval(@Param("userNumber")String phoneNumber, @Param("start")long startDate, @Param("end")long endDate);
+    List<Track> getUserRouteFromParticularTime(@Param("userNumber")String phoneNumber, @Param("start")long startDate, @Param("end")long endDate);
 
     @Query(value= "SELECT user_id FROM user_routes WHERE device_id = :location AND timestamp  BETWEEN :start AND :end", nativeQuery = true)
-    List<String> getAllUsersFromPlaceAndTimeInterval(@Param("location")String location, @Param("start")long startDate, @Param("end")long endDate);
+    List<String> getAllUsersFromParticularPlaceAndTime(@Param("location")String location, @Param("start")long startDate, @Param("end")long endDate);
 
     @Query(value= "SELECT DISTINCT user_id, timestamp, device_id FROM user_routes ORDER BY timestamp DESC", nativeQuery = true)
-    List<Track> getAllUsersWithLastActivityTime();
+    List<Track> getAllUsersWithLastActivity();
 }

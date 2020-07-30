@@ -3,6 +3,7 @@ package com.tchorek.routes_collector.database.service;
 import com.tchorek.routes_collector.database.model.Track;
 import com.tchorek.routes_collector.database.repositories.TrackRepository;
 import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
+@Log4j2
 @NoArgsConstructor
 @Service
 public class DatabaseService {
@@ -36,12 +37,12 @@ public class DatabaseService {
     public DatabaseService(TrackRepository trackRepository) {
         this.trackRepository = trackRepository;
         stringBuilder = new StringBuilder();
-        trackRepository.getAllUsersWithLastActivityTime()
+        trackRepository.getAllUsersWithLastActivity()
                 .forEach(track -> lastUserActivity.put(track.getPhoneNumber(), track.getDate()));
     }
 
     @Scheduled(cron = "0 0/5 * * * *")
-    public void checkUsersActivity() {
+    public void findAllInactiveUsers() {
         long currentTime = Instant.now().getEpochSecond();
         Set<String> newUnknownUsers = lastUserActivity.entrySet().stream()
                 .filter(userLastTrack -> currentTime - userLastTrack.getValue() > 360)
@@ -64,8 +65,7 @@ public class DatabaseService {
     public void unsubscribeUser(String phoneNumber, long startTimestamp, long stopTimestamp) throws IOException {
         if (trackRepository.findById(phoneNumber).isPresent()) {
             saveUserActivityToFile(phoneNumber, startTimestamp, stopTimestamp);
-            removeUserFromActivityList(phoneNumber);
-            removeAllUserHistory(phoneNumber);
+            removeUserData(phoneNumber);
         }
     }
 
@@ -77,6 +77,7 @@ public class DatabaseService {
 
     private void saveToFile(String userNumber) throws IOException {
         long timestamp = Instant.now().getEpochSecond();
+        log.info("Saving {} to log file", userNumber);
         bufferedWriter = new BufferedWriter(new FileWriter(new File(
                 System.getProperty("user.dir")) + File.separator + userNumber + SEPARATOR + timestamp + SUFFIX));
         bufferedWriter.write(stringBuilder.toString());
@@ -85,22 +86,18 @@ public class DatabaseService {
     }
 
     private void collectUserDailyActivity(String userNumber, long startTimestamp, long stopTimestamp) {
-        List<Track> userDailyRoute = trackRepository.getUserLocationsFromTimeInterval(userNumber, startTimestamp, stopTimestamp);
-        userDailyRoute.forEach(track ->
-                {
-                    System.out.println("APPENDING: " + track.toString());
-                    stringBuilder.append(track.toString());
-                }
-        );
+        log.info("Collecting {} daily activity", userNumber);
+        List<Track> userDailyRoute = trackRepository.getUserRouteFromParticularTime(userNumber, startTimestamp, stopTimestamp);
+        userDailyRoute.forEach(track ->stringBuilder.append(track.toString()));
     }
 
     private void removeUserFromActivityList(String userNumber) {
         lastUserActivity.remove(userNumber);
     }
 
-    public void removeAllUserHistory(String userNumber) {
+    public void removeUserData(String userNumber) {
         removeUserFromActivityList(userNumber);
-        trackRepository.deleteUserHistory(userNumber);
+        trackRepository.deleteUserRoute(userNumber);
     }
 
     public void clearDatabase() {
@@ -112,23 +109,23 @@ public class DatabaseService {
         return trackRepository.getListOfUsersByLocationAndTime(location, timestamp);
     }
 
-    public List<String> getListOfUsersWhoMetUserRecently(String number, long startTime, long stopTime) {
-        return trackRepository.getListOfUsersWhoMetUserRecently(number, startTime, stopTime);
+    public List<String> getUsersWhoMetUserRecently(String number, long startTime, long stopTime) {
+        return trackRepository.getUsersWhoMetUserRecently(number, startTime, stopTime);
     }
 
     public Iterable<Track> getAllData() {
         return trackRepository.findAll();
     }
 
-    public Iterable<Track> getAllUserData(String phoneNumber) {
-        return trackRepository.getAllUserTracks(phoneNumber);
+    public Iterable<Track> getUserRoute(String phoneNumber) {
+        return trackRepository.getUserRoute(phoneNumber);
     }
 
-    public Iterable<Track> getUserLocationsFromTimeInterval(String phoneNumber, long startDate, long stopDate) {
-        return trackRepository.getUserLocationsFromTimeInterval(phoneNumber, startDate, stopDate);
+    public Iterable<Track> getUserRouteFromParticularTime(String phoneNumber, long startDate, long stopDate) {
+        return trackRepository.getUserRouteFromParticularTime(phoneNumber, startDate, stopDate);
     }
 
-    public List<String> getAllUsersFromPlaceAndTimeInterval(String location, long startDate, long stopDate) {
-        return trackRepository.getAllUsersFromPlaceAndTimeInterval(location, startDate, stopDate);
+    public List<String> getAllUsersFromParticularPlaceAndTime(String location, long startDate, long stopDate) {
+        return trackRepository.getAllUsersFromParticularPlaceAndTime(location, startDate, stopDate);
     }
 }
