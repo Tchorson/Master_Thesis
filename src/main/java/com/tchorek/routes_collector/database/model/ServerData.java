@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.database.json;
+package com.tchorek.routes_collector.database.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class ServerDataJSON {
+public class ServerData {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String userData;
@@ -20,7 +20,7 @@ public class ServerDataJSON {
     private long stopDate;
 
     @JsonCreator
-    public ServerDataJSON(@JsonProperty("userData") String userData, @JsonProperty("startDate") long startDate, @JsonProperty("stopDate") long stopDate) {
+    public ServerData(@JsonProperty("userData") String userData, @JsonProperty("startDate") long startDate, @JsonProperty("stopDate") long stopDate) {
         this.userData = userData;
         this.startDate = startDate;
         this.stopDate = stopDate;

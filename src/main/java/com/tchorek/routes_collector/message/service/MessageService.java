@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.database.service;
+package com.tchorek.routes_collector.message.service;
 
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;

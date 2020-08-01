@@ -1,8 +1,9 @@
 package com.tchorek.routes_collector.database;
 
-import com.tchorek.routes_collector.database.json.BluetoothDataJSON;
-import com.tchorek.routes_collector.database.json.ServerDataJSON;
+import com.tchorek.routes_collector.message.model.BluetoothData;
+import com.tchorek.routes_collector.database.model.ServerData;
 import com.tchorek.routes_collector.database.service.DatabaseService;
+import com.tchorek.routes_collector.monitoring.service.MonitoringService;
 import com.tchorek.routes_collector.utils.TrackMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,21 +20,26 @@ public class DatabaseController {
     @Autowired
     DatabaseService databaseService;
 
+    @Autowired
+    MonitoringService monitoringService;
+
     @PostMapping(path = "/user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity saveUserTrack(@RequestBody BluetoothDataJSON data){
+    public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
         databaseService.saveTrackOfUser(TrackMapper.mapJsonToObject(data));
+        monitoringService.saveUserActivity(TrackMapper.mapJsonToObject(data));
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @ResponseBody
     @GetMapping(path = "/missing-users")
     public ResponseEntity getUsersWithUnknownStatus(){
-        return ResponseEntity.ok().body(databaseService.getAllMissingUsers());
+        return ResponseEntity.ok().body(monitoringService.getAllMissingUsers());
     }
 
     @DeleteMapping(path = "/remove-user", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity deleteUserHistory(@RequestBody ServerDataJSON phoneWithTime) throws IOException {
-        databaseService.unsubscribeUser(phoneWithTime.getUserData(), phoneWithTime.getStartDate(), phoneWithTime.getStopDate());
+    public ResponseEntity deleteUserHistory(@RequestBody String phoneNumber) {
+        databaseService.unsubscribeUser(phoneNumber);
+        monitoringService.removeUserFromActivityList(phoneNumber);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -43,7 +49,7 @@ public class DatabaseController {
     }
 
     @GetMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getUsersWhoMetUserRecently(@RequestBody ServerDataJSON phoneWithTime){
+    public ResponseEntity getUsersWhoMetUserRecently(@RequestBody ServerData phoneWithTime){
         return ResponseEntity.ok().body(databaseService.getUsersWhoMetUserRecently(phoneWithTime.getUserData(), phoneWithTime.getStartDate(), phoneWithTime.getStopDate()));
     }
 
@@ -53,12 +59,12 @@ public class DatabaseController {
     }
 
     @GetMapping(path = "/user-route", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getUserRouteFromParticularTime(@RequestBody ServerDataJSON phoneWithTime) {
+    public ResponseEntity getUserRouteFromParticularTime(@RequestBody ServerData phoneWithTime) {
         return ResponseEntity.ok().body(databaseService.getUserRouteFromParticularTime(phoneWithTime.getUserData(), phoneWithTime.getStartDate(), phoneWithTime.getStopDate()));
     }
 
     @GetMapping(path = "/users-time", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getAllUsersFromParticularPlaceAndTime(@RequestBody ServerDataJSON locationAndTime){
+    public ResponseEntity getAllUsersFromParticularPlaceAndTime(@RequestBody ServerData locationAndTime){
         return ResponseEntity.ok().body(databaseService.getAllUsersFromParticularPlaceAndTime(locationAndTime.getUserData(), locationAndTime.getStartDate(), locationAndTime.getStopDate()));
     }
 }
