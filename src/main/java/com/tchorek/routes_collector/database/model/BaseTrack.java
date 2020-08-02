@@ -6,9 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.Instant;
 
 @Getter
@@ -16,6 +14,7 @@ import java.time.Instant;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
+@MappedSuperclass
 public abstract class BaseTrack {
 
     @Id
