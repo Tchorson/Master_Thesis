@@ -14,18 +14,18 @@ public class RegistrationData {
     private String userData;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private long registrationDate;
+    private long date;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private String latitude;
+    private long latitude;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private String longitude;
+    private long longitude;
 
     @JsonCreator
-    public RegistrationData(@JsonProperty("userData") String userData, @JsonProperty("registrationDate") long registrationDate, @JsonProperty("lat") String latitude, @JsonProperty("lng") String longitude) {
+    public RegistrationData(@JsonProperty("userData") String userData, @JsonProperty("registrationDate") long date, @JsonProperty("lat") long latitude, @JsonProperty("lng") long longitude) {
         this.userData = userData;
-        this.registrationDate = registrationDate;
+        this.date = date;
         this.latitude = latitude;
         this.longitude = longitude;
     }

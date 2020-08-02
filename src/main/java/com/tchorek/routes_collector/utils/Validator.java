@@ -2,15 +2,15 @@ package com.tchorek.routes_collector.utils;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-public class DeviceValidator {
+public class Validator {
 
     @Log4j2
-    static class Validator {
+    public static class DeviceValidator {
         static DeviceType deviceType;
         static Locations locations;
 

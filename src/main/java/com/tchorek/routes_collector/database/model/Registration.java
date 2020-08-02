@@ -16,20 +16,24 @@ import java.time.Instant;
 public class Registration {
 
     @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private String phoneNumber;
 
-    @Column(name = "registration_date")
-    private long dateUnixTimestamp;
+    @Column(name = "walk_date", nullable = false)
+    private long walkTimestamp;
 
-    @Column(name = "latitude")
-    private String latitude;
+    @Column(name = "latitude", nullable = false)
+    private long latitude;
 
-    @Column(name = "longitude")
-    private String longitude;
+    @Column(name = "longitude", nullable = false)
+    private long longitude;
+
+    @Column(name = "approved")
+    private Boolean approved;
 
     @Override
     public String toString() {
-        return "Registration" + phoneNumber + Instant.ofEpochSecond(dateUnixTimestamp) + latitude + ", " + longitude +"\n";
+        return "Registration" + phoneNumber + " " + Instant.ofEpochSecond(walkTimestamp)
+                + latitude + ", " + longitude+ " "+ approved +"\n";
     }
 }

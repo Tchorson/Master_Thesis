@@ -5,7 +5,8 @@ import com.tchorek.routes_collector.message.json.BluetoothData;
 import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.monitoring.service.MonitoringService;
-import com.tchorek.routes_collector.utils.TrackMapper;
+import com.tchorek.routes_collector.utils.Mapper;
+import com.tchorek.routes_collector.utils.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,22 +23,37 @@ public class DatabaseController {
     @Autowired
     MonitoringService monitoringService;
 
+    @PostMapping(path = "/verify", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity verifyUserLocation(@RequestBody RegistrationData verificationData){
+        try {
+           return monitoringService.isUserCurrentLocationValid(verificationData) ?
+                   ResponseEntity.ok(HttpStatus.OK) : ResponseEntity.ok().body("USER NOT AT HOME, PLEASE CONTACT SANEPID IMMEDIATELY") ;
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+        }
+
+    }
+
     @PutMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity registerUser(@RequestBody RegistrationData data){
-        databaseService.saveRegistration(data.getUserData(), data.getRegistrationDate(), data.getLatitude(), data.getLongitude());
+    public ResponseEntity registerUser(@RequestBody RegistrationData registration){
+        databaseService.saveRegistration(registration.getUserData(), registration.getDate(), registration.getLatitude(), registration.getLongitude());
+        monitoringService.approveUser(Mapper.mapJsonToObject(registration));
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @GetMapping(path = "/registrations")
-    public ResponseEntity getRegistrations(){
-        return ResponseEntity.ok().body(databaseService.getAllRegistrations());
+    public ResponseEntity getAllRegisteredUsers(){
+        return ResponseEntity.ok().body(databaseService.getAllRegisteredUsers());
     }
 
     @PostMapping(path = "/user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
-        databaseService.saveTrackOfUser(TrackMapper.mapJsonToObject(data));
-        monitoringService.saveUserActivity(TrackMapper.mapJsonToObject(data));
-        return ResponseEntity.ok(HttpStatus.OK);
+        if(Validator.DeviceValidator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegistered(data.getUser())){
+            databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
+            monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
+            return ResponseEntity.ok(HttpStatus.OK);
+        }
+        return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseBody
@@ -46,12 +62,6 @@ public class DatabaseController {
         return ResponseEntity.ok().body(monitoringService.getAllMissingUsers());
     }
 
-    @DeleteMapping(path = "/remove-user", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity deleteUserHistory(@RequestBody String phoneNumber) {
-        databaseService.unsubscribeUser(phoneNumber);
-        monitoringService.removeUserFromActivityList(phoneNumber);
-        return ResponseEntity.ok(HttpStatus.OK);
-    }
 
     @GetMapping(path = "/all-data")
     public ResponseEntity getAllData(){

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface HistoryTrackRepository extends CrudRepository<HistoryTracks, String> {
 
     @Query(value = "INSERT INTO user_routes_history (user_id, device_id, timestamp) " +
-            "SELECT user_id, device_id, timestamp FROM user_routes;" +
-            "DELETE FROM user_routes", nativeQuery = true)
+            "SELECT user_id, device_id, timestamp FROM user_routes;", nativeQuery = true)
     public void transferDailyDataToHistory();
 }

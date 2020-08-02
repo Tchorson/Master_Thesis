@@ -2,14 +2,20 @@ package com.tchorek.routes_collector.database.service;
 
 import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.repositories.HistoryTrackRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
 import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Log4j2
 @NoArgsConstructor
@@ -18,37 +24,32 @@ public class DatabaseService {
 
     DailyTrackRepository dailyTrackRepository;
     RegistrationRepository registrationRepository;
-
+    HistoryTrackRepository historyTrackRepository;
 
     @Autowired
-    public DatabaseService(DailyTrackRepository dailyTrackRepository) {
+    public DatabaseService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, HistoryTrackRepository historyTrackRepository) {
         this.dailyTrackRepository = dailyTrackRepository;
+        this.registrationRepository = registrationRepository;
+        this.historyTrackRepository = historyTrackRepository;
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void transferHistoricalDataAndClearDatabase() {
+        historyTrackRepository.transferDailyDataToHistory();
+        dailyTrackRepository.deleteAll();
+        registrationRepository.deleteAll();
     }
 
     public void saveTrackOfUser(DailyTracks userDailyTracks) {
         dailyTrackRepository.save(userDailyTracks);
     }
 
-    public void unsubscribeUser(String phoneNumber){
-        if (dailyTrackRepository.findById(phoneNumber).isPresent()) {
-            removeUserRoute(phoneNumber);
-        }
+    public void saveRegistration(String userPhone, long registrationDate, long lat, long lng){
+        registrationRepository.save(new Registration(userPhone, registrationDate, lat, lng, null));
     }
 
-    public void saveRegistration(String userPhone, long registrationDate, String lat, String lng){
-        registrationRepository.save(new Registration(userPhone, registrationDate, lat, lng));
-    }
-
-    public Iterable<Registration> getAllRegistrations(){
+    public Iterable<Registration> getAllRegisteredUsers(){
        return registrationRepository.findAll();
-    }
-
-    public void removeUserRoute(String userNumber) {
-        dailyTrackRepository.deleteUserRoute(userNumber);
-    }
-
-    public void clearDatabase() {
-        dailyTrackRepository.deleteAll();
     }
 
     public List<DailyTracks> getListOfUsersByLocationAndTime(String location, long timestamp) {
