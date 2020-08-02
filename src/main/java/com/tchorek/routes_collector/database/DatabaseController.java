@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.database;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
+import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.message.json.BluetoothData;
 import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.service.DatabaseService;
@@ -13,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 public class DatabaseController {
@@ -46,9 +49,30 @@ public class DatabaseController {
         return ResponseEntity.ok().body(databaseService.getAllRegisteredUsers());
     }
 
+    @PostMapping(path = "/send-approval-decisions", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity sendAllDecisionsToDB(@RequestBody List<Registration> decisions){
+        databaseService.saveAllRegistrations(decisions);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/get-all-approvals")
+    public ResponseEntity getAllApprovals(){
+        return ResponseEntity.ok().body(databaseService.getAllApprovals());
+    }
+
+    @GetMapping(path = "/get-all-new-approvals")
+    public ResponseEntity getAllNewApprovals(){
+        return ResponseEntity.ok().body(databaseService.getAllNewRegistrations());
+    }
+
+    @GetMapping(path = "/get-all-approved-users")
+    public ResponseEntity getAllApprovedUsersToLeave(){
+        return ResponseEntity.ok().body(databaseService.getAllApprovedUsers());
+    }
+
     @PostMapping(path = "/user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
-        if(Validator.DeviceValidator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegistered(data.getUser())){
+        if(Validator.DeviceValidator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegisteredAndEligibleForWalk(data.getUser())){
             databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
             monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
             return ResponseEntity.ok(HttpStatus.OK);

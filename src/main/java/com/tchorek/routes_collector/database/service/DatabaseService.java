@@ -1,21 +1,18 @@
 package com.tchorek.routes_collector.database.service;
 
-import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.model.Registration;
+import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import com.tchorek.routes_collector.database.repositories.HistoryTrackRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
-import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Log4j2
 @NoArgsConstructor
@@ -38,6 +35,22 @@ public class DatabaseService {
         historyTrackRepository.transferDailyDataToHistory();
         dailyTrackRepository.deleteAll();
         registrationRepository.deleteAll();
+    }
+
+    public void saveAllRegistrations(List<Registration> decisions){
+        registrationRepository.saveAll(decisions);
+    }
+
+    public Iterable<Registration> getAllApprovals(){
+        return registrationRepository.findAll();
+    }
+
+    public List<Registration> getAllNewRegistrations(){
+        return registrationRepository.getAllNewRegistrations();
+    }
+
+    public Set<String> getAllApprovedUsers(){
+       return registrationRepository.getAllApprovedUsers();
     }
 
     public void saveTrackOfUser(DailyTracks userDailyTracks) {

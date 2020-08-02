@@ -70,8 +70,8 @@ public class MonitoringService {
         registrationRepository.save(approvedUser);
     }
 
-    public boolean checkIfUserIsRegistered(String userNumber){
-        return registrationRepository.existsById(userNumber);
+    public boolean checkIfUserIsRegisteredAndEligibleForWalk(String userNumber){
+        return registrationRepository.selectApprovedUser(userNumber) > 0;
     }
 
     public Set<String> getAllMissingUsers() {
