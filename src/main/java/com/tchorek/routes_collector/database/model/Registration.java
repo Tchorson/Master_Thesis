@@ -12,21 +12,24 @@ import java.time.Instant;
 @Getter
 @AllArgsConstructor
 @RequiredArgsConstructor
-@Entity(name = "user_routes")
-public class Track {
+@Entity(name = "user_registrations")
+public class Registration {
 
     @Id
     @Column(name = "user_id")
     private String phoneNumber;
 
-    @Column(name = "device_id")
-    private String location;
+    @Column(name = "registration_date")
+    private long dateUnixTimestamp;
 
-    @Column(name = "timestamp")
-    private long date;
+    @Column(name = "latitude")
+    private String latitude;
+
+    @Column(name = "longitude")
+    private String longitude;
 
     @Override
     public String toString() {
-        return phoneNumber + " " + location + " " + Instant.ofEpochSecond(date) +"\n";
+        return "Registration" + phoneNumber + Instant.ofEpochSecond(dateUnixTimestamp) + latitude + ", " + longitude +"\n";
     }
 }

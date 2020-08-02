@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.database.model;
+package com.tchorek.routes_collector.database.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

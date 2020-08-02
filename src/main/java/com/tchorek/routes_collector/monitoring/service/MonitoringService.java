@@ -1,7 +1,7 @@
 package com.tchorek.routes_collector.monitoring.service;
 
-import com.tchorek.routes_collector.database.model.Track;
-import com.tchorek.routes_collector.database.repositories.TrackRepository;
+import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 public class MonitoringService {
 
-    TrackRepository trackRepository;
+    DailyTrackRepository dailyTrackRepository;
 
     Map<String, Long> lastUserActivity = new LinkedHashMap<>();
     Set<String> usersWithUnknownStatus = new LinkedHashSet<>();
@@ -34,18 +34,18 @@ public class MonitoringService {
     }
 
     @Autowired
-    public MonitoringService(TrackRepository trackRepository) {
-        this.trackRepository = trackRepository;
-        trackRepository.getAllUsersWithLastActivity()
-                .forEach(track -> lastUserActivity.put(track.getPhoneNumber(), track.getDate()));
+    public MonitoringService(DailyTrackRepository dailyTrackRepository) {
+        this.dailyTrackRepository = dailyTrackRepository;
+        dailyTrackRepository.getAllUsersWithLastActivity()
+                .forEach(dailyTracks -> lastUserActivity.put(dailyTracks.getPhoneNumber(), dailyTracks.getDate()));
     }
 
     public Set<String> getAllMissingUsers() {
         return usersWithUnknownStatus;
     }
 
-    public void saveUserActivity(Track userTrack) {
-        lastUserActivity.put(userTrack.getPhoneNumber(), userTrack.getDate());
+    public void saveUserActivity(DailyTracks userDailyTracks) {
+        lastUserActivity.put(userDailyTracks.getPhoneNumber(), userDailyTracks.getDate());
     }
 
     public void removeUserFromActivityList(String userNumber) {

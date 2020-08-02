@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.message.model;
+package com.tchorek.routes_collector.message.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

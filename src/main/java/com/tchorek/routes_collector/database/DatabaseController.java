@@ -1,7 +1,8 @@
 package com.tchorek.routes_collector.database;
 
-import com.tchorek.routes_collector.message.model.BluetoothData;
-import com.tchorek.routes_collector.database.model.ServerData;
+import com.tchorek.routes_collector.database.json.RegistrationData;
+import com.tchorek.routes_collector.message.json.BluetoothData;
+import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.monitoring.service.MonitoringService;
 import com.tchorek.routes_collector.utils.TrackMapper;
@@ -12,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-
 @Controller
 public class DatabaseController {
 
@@ -22,6 +21,17 @@ public class DatabaseController {
 
     @Autowired
     MonitoringService monitoringService;
+
+    @PutMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity registerUser(@RequestBody RegistrationData data){
+        databaseService.saveRegistration(data.getUserData(), data.getRegistrationDate(), data.getLatitude(), data.getLongitude());
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/registrations")
+    public ResponseEntity getRegistrations(){
+        return ResponseEntity.ok().body(databaseService.getAllRegistrations());
+    }
 
     @PostMapping(path = "/user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
