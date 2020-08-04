@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.database;
+package com.tchorek.routes_collector.controllers;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
 import com.tchorek.routes_collector.database.model.Registration;
@@ -26,16 +26,6 @@ public class DatabaseController {
     @Autowired
     MonitoringService monitoringService;
 
-    @PostMapping(path = "/verify", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity verifyUserLocation(@RequestBody RegistrationData verificationData){
-        try {
-           return monitoringService.isUserCurrentLocationValid(verificationData) ?
-                   ResponseEntity.ok(HttpStatus.OK) : ResponseEntity.ok().body("USER NOT AT HOME, PLEASE CONTACT SANEPID IMMEDIATELY") ;
-        } catch (Exception e) {
-            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
-        }
-
-    }
 
     @PutMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerUser(@RequestBody RegistrationData registration){
@@ -70,7 +60,7 @@ public class DatabaseController {
         return ResponseEntity.ok().body(databaseService.getAllApprovedUsers());
     }
 
-    @PostMapping(path = "/user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/save-user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
         if(Validator.DeviceValidator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegisteredAndEligibleForWalk(data.getUser())){
             databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
@@ -79,13 +69,6 @@ public class DatabaseController {
         }
         return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
     }
-
-    @ResponseBody
-    @GetMapping(path = "/missing-users")
-    public ResponseEntity getUsersWithUnknownStatus(){
-        return ResponseEntity.ok().body(monitoringService.getAllMissingUsers());
-    }
-
 
     @GetMapping(path = "/all-data")
     public ResponseEntity getAllData(){
