@@ -8,6 +8,7 @@ import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import com.tchorek.routes_collector.database.repositories.FugitiveRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
 import com.tchorek.routes_collector.utils.Mapper;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 
+@Log4j2
 @Service
 public class MonitoringService {
 
@@ -30,18 +32,20 @@ public class MonitoringService {
     private final short INACTIVITY_PERIOID = 360;
     private final short MISSING_PERIOID = 180;
 
-    @Scheduled(cron = "0 0/5 * * * *")
+    @Scheduled(cron = "0 0/2 * * * *")
     public void findAllInactiveUsers() {
         long currentTime = Instant.now().getEpochSecond();
         lastUserActivity.entrySet().stream()
-                .filter(userLastTrack -> currentTime - userLastTrack.getValue() > INACTIVITY_PERIOID).peek(userLastActivity -> {
-                    if(!usersWithUnknownStatus.containsKey(userLastActivity.getKey()))
-                    usersWithUnknownStatus.put(userLastActivity.getKey(),Instant.now().getEpochSecond());
-                });
+                .filter(userLastTrack -> currentTime - userLastTrack.getValue() > INACTIVITY_PERIOID).forEach(userLastActivity -> {
+            if (!usersWithUnknownStatus.containsKey(userLastActivity.getKey())) {
+                usersWithUnknownStatus.put(userLastActivity.getKey(), Instant.now().getEpochSecond());
+            }
+        });
+        log.info("current unknown users: \n{}", usersWithUnknownStatus.keySet().toString());
         //Todo: add sms mechanism for inactive people
     }
 
-    @Scheduled(cron = "30 0/5 * * * *")
+    @Scheduled(cron = "30 0/2 * * * *")
     public void findAllFugitives(){
 
         long currentTime = Instant.now().getEpochSecond();
@@ -49,34 +53,36 @@ public class MonitoringService {
                 .forEach(reactivatedUser -> usersWithUnknownStatus.remove(reactivatedUser.getKey()));
 
         usersWithUnknownStatus.entrySet().stream().filter(stringLongEntry -> currentTime - stringLongEntry.getValue() > MISSING_PERIOID)
-                .peek(userUnknownStatus -> {
-            if (!fugitives.containsKey(userUnknownStatus.getKey())){
-                fugitives.put(userUnknownStatus.getKey(), Instant.now().getEpochSecond());
-                fugitiveRepository.save(new Fugitive(userUnknownStatus.getKey(), null, null, userUnknownStatus.getValue()));
-            }
-        });
+                .forEach(userUnknownStatus -> {
+                    System.out.println(userUnknownStatus.getKey());
+                    if (!fugitives.containsKey(userUnknownStatus.getKey())) {
+                        fugitives.put(userUnknownStatus.getKey(), Instant.now().getEpochSecond());
+                        fugitiveRepository.save(new Fugitive(userUnknownStatus.getKey(), null, null, userUnknownStatus.getValue()));
+                    }
+                });
+        log.info("current fugitive users {}", fugitives.keySet().toString());
     }
 
-    public void claimUserAsFugitive(RegistrationData currentUserData){
+    public void claimUserAsFugitive(RegistrationData currentUserData) {
         fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
     }
 
-    public Set<String> getAllUnknownUsers(){
+    public Set<String> getAllUnknownUsers() {
         return usersWithUnknownStatus.keySet();
     }
 
     public boolean isUserCurrentLocationValid(RegistrationData currentUserCoordinates) throws Exception {
-       Optional<Registration> userEntryCoordinates = registrationRepository.findById(currentUserCoordinates.getUserData());
-       if(userEntryCoordinates.isEmpty()) throw new Exception("Unapproved user");
-       if(isUserAtHome(userEntryCoordinates.get(), currentUserCoordinates)){
-           removeUserFromMonitoring(currentUserCoordinates.getUserData());
-           registrationRepository.deleteById(currentUserCoordinates.getUserData());
-           return true;
-       }
-       return false;
+        Optional<Registration> userEntryCoordinates = registrationRepository.findById(currentUserCoordinates.getUserData());
+        if (userEntryCoordinates.isEmpty()) throw new Exception("Unapproved user");
+        if (isUserAtHome(userEntryCoordinates.get(), currentUserCoordinates)) {
+            removeUserFromMonitoring(currentUserCoordinates.getUserData());
+            registrationRepository.deleteById(currentUserCoordinates.getUserData());
+            return true;
+        }
+        return false;
     }
 
-    private boolean isUserAtHome(Registration userEntryPosition, RegistrationData currentUserData){
+    private boolean isUserAtHome(Registration userEntryPosition, RegistrationData currentUserData) {
         return Math.abs(currentUserData.getLatitude() - userEntryPosition.getLatitude()) <= MARGIN_OF_ERROR
                 && Math.abs(currentUserData.getLongitude() - userEntryPosition.getLongitude()) <= MARGIN_OF_ERROR;
     }
@@ -91,20 +97,20 @@ public class MonitoringService {
         this.dailyTrackRepository = dailyTrackRepository;
         this.registrationRepository = registrationRepository;
         this.fugitiveRepository = fugitiveRepository;
-        dailyTrackRepository.getAllUsersWithLastActivity()
+        this.dailyTrackRepository.getAllUsersWithLastActivity()
                 .forEach(dailyTracks -> lastUserActivity.put(dailyTracks.getPhoneNumber(), dailyTracks.getDate()));
         fugitives.putAll(Mapper.mapFugitivesToMap(fugitiveRepository.findAll()));
     }
 
-    public void approveUser(Registration approvedUser){
+    public void approveUser(Registration approvedUser) {
         registrationRepository.save(approvedUser);
     }
 
-    public void approveUsers(List<Registration> approvedUsers){
+    public void approveUsers(List<Registration> approvedUsers) {
         registrationRepository.saveAll(approvedUsers);
     }
 
-    public boolean checkIfUserIsRegisteredAndEligibleForWalk(String userNumber){
+    public boolean checkIfUserIsRegisteredAndEligibleForWalk(String userNumber) {
         return registrationRepository.selectApprovedUser(userNumber) > 0;
     }
 

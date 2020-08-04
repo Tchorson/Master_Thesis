@@ -9,7 +9,6 @@ import javax.persistence.Table;
 
 @Getter
 @AllArgsConstructor
-@RequiredArgsConstructor
 @Entity
 @Table(name = "user_routes_daily")
 public class DailyTracks extends  BaseTrack{

@@ -12,9 +12,9 @@ import java.util.List;
 public interface HistoryTrackRepository extends CrudRepository<HistoryTracks, String> {
 
     @Query(value = "INSERT INTO user_routes_history (user_id, device_id, timestamp) " +
-            "SELECT user_id, device_id, timestamp FROM user_routes;", nativeQuery = true)
+            "SELECT user_id, device_id, timestamp FROM user_routes_daily;", nativeQuery = true)
     void transferDailyDataToHistory();
 
-    @Query(value = "SELECT user_id, device_id, timestamp FROM user_routes WHERE user_id = :user_id", nativeQuery = true)
+    @Query(value = "SELECT user_id, device_id, timestamp FROM user_routes_history WHERE user_id = :user_id", nativeQuery = true)
     List<HistoryTracks> getUserHistory(@Param("user_id")String userId);
 }

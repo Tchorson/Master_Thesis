@@ -3,7 +3,6 @@ package com.tchorek.routes_collector.database.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
@@ -11,10 +10,9 @@ import java.time.Instant;
 
 @Getter
 @Entity
+@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
 @RequiredArgsConstructor
 @AllArgsConstructor
-@NoArgsConstructor
-@MappedSuperclass
 public abstract class BaseTrack {
 
     @Id
