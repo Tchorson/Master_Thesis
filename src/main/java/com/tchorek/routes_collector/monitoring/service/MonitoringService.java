@@ -44,13 +44,10 @@ public class MonitoringService {
     @Scheduled(cron = "30 0/5 * * * *")
     public void findAllFugitives(){
 
-        usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> lastUserActivity.get(unknownUser.getKey()) < INACTIVITY_PERIOID)
-                .forEach(foundUser -> {
-                    fugitives.remove(foundUser.getKey());
-                    usersWithUnknownStatus.remove(foundUser.getKey());
-                });
-
         long currentTime = Instant.now().getEpochSecond();
+        usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> currentTime - lastUserActivity.get(unknownUser.getKey()) < INACTIVITY_PERIOID)
+                .forEach(reactivatedUser -> usersWithUnknownStatus.remove(reactivatedUser.getKey()));
+
         usersWithUnknownStatus.entrySet().stream().filter(stringLongEntry -> currentTime - stringLongEntry.getValue() > MISSING_PERIOID)
                 .peek(userUnknownStatus -> {
             if (!fugitives.containsKey(userUnknownStatus.getKey())){
@@ -62,6 +59,10 @@ public class MonitoringService {
 
     public void claimUserAsFugitive(RegistrationData currentUserData){
         fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
+    }
+
+    public Set<String> getAllUnknownUsers(){
+        return usersWithUnknownStatus.keySet();
     }
 
     public boolean isUserCurrentLocationValid(RegistrationData currentUserCoordinates) throws Exception {
@@ -97,6 +98,10 @@ public class MonitoringService {
 
     public void approveUser(Registration approvedUser){
         registrationRepository.save(approvedUser);
+    }
+
+    public void approveUsers(List<Registration> approvedUsers){
+        registrationRepository.saveAll(approvedUsers);
     }
 
     public boolean checkIfUserIsRegisteredAndEligibleForWalk(String userNumber){

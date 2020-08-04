@@ -1,8 +1,11 @@
 package com.tchorek.routes_collector.database.service;
 
 import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.model.Fugitive;
+import com.tchorek.routes_collector.database.model.HistoryTracks;
 import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
+import com.tchorek.routes_collector.database.repositories.FugitiveRepository;
 import com.tchorek.routes_collector.database.repositories.HistoryTrackRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
 import lombok.NoArgsConstructor;
@@ -22,12 +25,14 @@ public class DatabaseService {
     DailyTrackRepository dailyTrackRepository;
     RegistrationRepository registrationRepository;
     HistoryTrackRepository historyTrackRepository;
+    FugitiveRepository fugitiveRepository;
 
     @Autowired
-    public DatabaseService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, HistoryTrackRepository historyTrackRepository) {
+    public DatabaseService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, HistoryTrackRepository historyTrackRepository, FugitiveRepository fugitiveRepository) {
         this.dailyTrackRepository = dailyTrackRepository;
         this.registrationRepository = registrationRepository;
         this.historyTrackRepository = historyTrackRepository;
+        this.fugitiveRepository = fugitiveRepository;
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -36,6 +41,7 @@ public class DatabaseService {
         dailyTrackRepository.deleteAll();
         registrationRepository.deleteAll();
     }
+
 
     public void saveAllRegistrations(List<Registration> decisions){
         registrationRepository.saveAll(decisions);
@@ -53,12 +59,20 @@ public class DatabaseService {
        return registrationRepository.getAllApprovedUsers();
     }
 
+    public List<HistoryTracks> getUserHistory(String user){
+        return historyTrackRepository.getUserHistory(user);
+    }
+
     public void saveTrackOfUser(DailyTracks userDailyTracks) {
         dailyTrackRepository.save(userDailyTracks);
     }
 
-    public void saveRegistration(String userPhone, long registrationDate, long lat, long lng){
-        registrationRepository.save(new Registration(userPhone, registrationDate, lat, lng, null));
+    public void saveRegistration(Registration registration){
+        registrationRepository.save(registration);
+    }
+
+    public Iterable<Fugitive> getAllFugitives(){
+        return fugitiveRepository.findAll();
     }
 
     public Iterable<Registration> getAllRegisteredUsers(){
