@@ -22,6 +22,11 @@ public interface DailyTrackRepository extends CrudRepository<DailyTracks,String>
 
     @Modifying
     @Transactional
+    @Query(value= "DELETE FROM user_routes_daily" ,nativeQuery = true)
+    void deleteUsers();
+
+    @Modifying
+    @Transactional
     @Query(value= "DELETE FROM user_routes_daily WHERE user_id = :userNumber" ,nativeQuery = true)
      void deleteUserRoute(@Param("userNumber") String number);
 

@@ -22,16 +22,16 @@ public class Fugitive {
     private String phoneNumber;
 
     @Column(name = "latitude")
-    private Long latitude;
+    private Float latitude;
 
     @Column(name = "longitude")
-    private Long longitude;
+    private Float longitude;
 
     @Column(name = "escape_date", nullable = false)
     private long date;
 
     @Override
     public String toString() {
-        return "Track" + phoneNumber + " " + latitude + " " + Instant.ofEpochSecond(longitude)+ " "+ date +"\n";
+        return "Track" + phoneNumber + " " + latitude + " " + longitude+ " "+ Instant.ofEpochSecond(date) +"\n";
     }
 }

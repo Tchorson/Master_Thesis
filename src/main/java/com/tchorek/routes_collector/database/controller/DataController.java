@@ -1,4 +1,4 @@
-package com.tchorek.routes_collector.controllers;
+package com.tchorek.routes_collector.database.controller;
 
 import com.tchorek.routes_collector.message.json.BluetoothData;
 import com.tchorek.routes_collector.database.json.ServerData;
@@ -14,9 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+
 @Log4j2
 @Controller
-public class UsersDataController {
+public class DataController {
 
     @Autowired
     DatabaseService databaseService;
@@ -31,6 +33,7 @@ public class UsersDataController {
             monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
             return ResponseEntity.ok(HttpStatus.OK);
         }
+        log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}",data.getUser(), Instant.ofEpochSecond(Instant.now().getEpochSecond()));
         return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
     }
 
@@ -39,7 +42,7 @@ public class UsersDataController {
         return ResponseEntity.ok().body(databaseService.getAllData());
     }
 
-    @GetMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUsersWhoMetUserRecently(@RequestBody ServerData phoneWithTime){
         return ResponseEntity.ok().body(databaseService.getUsersWhoMetUserRecently(phoneWithTime.getUserData(), phoneWithTime.getStartDate(), phoneWithTime.getStopDate()));
     }

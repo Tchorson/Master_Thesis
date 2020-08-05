@@ -32,7 +32,7 @@ public class MonitoringService {
     private final short INACTIVITY_PERIOID = 360;
     private final short MISSING_PERIOID = 180;
 
-    @Scheduled(cron = "0 0/2 * * * *")
+    @Scheduled(cron = "0 0/5 * * * *")
     public void findAllInactiveUsers() {
         long currentTime = Instant.now().getEpochSecond();
         lastUserActivity.entrySet().stream()
@@ -45,7 +45,7 @@ public class MonitoringService {
         //Todo: add sms mechanism for inactive people
     }
 
-    @Scheduled(cron = "30 0/2 * * * *")
+    @Scheduled(cron = "30 0/3 * * * *")
     public void findAllFugitives(){
 
         long currentTime = Instant.now().getEpochSecond();
@@ -60,6 +60,9 @@ public class MonitoringService {
                         fugitiveRepository.save(new Fugitive(userUnknownStatus.getKey(), null, null, userUnknownStatus.getValue()));
                     }
                 });
+
+        usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> currentTime - usersWithUnknownStatus.get(unknownUser.getKey()) > MISSING_PERIOID && fugitives.containsKey(unknownUser.getKey()))
+                .forEach(wantedUser -> usersWithUnknownStatus.remove(wantedUser.getKey()));
         log.info("current fugitive users {}", fugitives.keySet().toString());
     }
 
@@ -67,13 +70,9 @@ public class MonitoringService {
         fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
     }
 
-    public Set<String> getAllUnknownUsers() {
-        return usersWithUnknownStatus.keySet();
-    }
-
     public boolean isUserCurrentLocationValid(RegistrationData currentUserCoordinates) throws Exception {
         Optional<Registration> userEntryCoordinates = registrationRepository.findById(currentUserCoordinates.getUserData());
-        if (userEntryCoordinates.isEmpty()) throw new Exception("Unapproved user");
+        if (userEntryCoordinates.isEmpty() || !userEntryCoordinates.get().getApproved()) throw new Exception("Unapproved user or a fugitive");
         if (isUserAtHome(userEntryCoordinates.get(), currentUserCoordinates)) {
             removeUserFromMonitoring(currentUserCoordinates.getUserData());
             registrationRepository.deleteById(currentUserCoordinates.getUserData());
@@ -104,10 +103,6 @@ public class MonitoringService {
 
     public void approveUser(Registration approvedUser) {
         registrationRepository.save(approvedUser);
-    }
-
-    public void approveUsers(List<Registration> approvedUsers) {
-        registrationRepository.saveAll(approvedUsers);
     }
 
     public boolean checkIfUserIsRegisteredAndEligibleForWalk(String userNumber) {

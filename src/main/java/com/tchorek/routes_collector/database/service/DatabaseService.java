@@ -37,18 +37,18 @@ public class DatabaseService {
 
     @Scheduled(cron = "0 0 * * * *")
     public void transferHistoricalDataAndClearDatabase() {
+        log.info("Transferring daily data to history records");
         historyTrackRepository.transferDailyDataToHistory();
-        dailyTrackRepository.deleteAll();
-        registrationRepository.deleteAll();
+        dailyTrackRepository.deleteUsers();
+        registrationRepository.deleteRegistrations();
     }
 
+    public boolean isApprovalInDB(Registration approval){
+        return registrationRepository.findById(approval.getPhoneNumber()).isPresent();
+    }
 
-    public void saveAllRegistrations(List<Registration> decisions){
+    public void saveAllRegistrations(Iterable<Registration> decisions){
         registrationRepository.saveAll(decisions);
-    }
-
-    public Iterable<Registration> getAllApprovals(){
-        return registrationRepository.findAll();
     }
 
     public List<Registration> getAllNewRegistrations(){

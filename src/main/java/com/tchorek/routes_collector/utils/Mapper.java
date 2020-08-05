@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class Mapper {
 
-    private static final boolean APPROVED = true;
+    private static final Boolean NEW_APPROVAL = null;
 
     public static DailyTracks mapJsonToObject(BluetoothData input){
         return new DailyTracks(input.getUser(),input.getLocation(), Instant.now().getEpochSecond());
@@ -23,7 +23,7 @@ public class Mapper {
     }
 
     public static Registration mapJsonToObject(RegistrationData input){
-        return new Registration(input.getUserData(), input.getDate(), input.getLatitude(), input.getLongitude(), APPROVED);
+        return new Registration(input.getUserData(), input.getDate(), input.getLatitude(), input.getLongitude(), NEW_APPROVAL);
     }
 
     public static RegistrationData mapObjectToJson(Registration input){
