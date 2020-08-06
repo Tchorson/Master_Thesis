@@ -14,7 +14,7 @@ enum DeviceType {
 
     boolean isValid(String input){
         for(DeviceType type : DeviceType.values()){
-            if (input.toUpperCase().equals(type.name())){
+            if (input.equals(type.name())){
                 return true;
             }
         }

@@ -18,33 +18,41 @@ public class Validator {
         private static final byte LOCATION_INDEX = 1;
 
         static Pattern pattern = Pattern.compile(DEVICE_PATTERN, Pattern.CASE_INSENSITIVE);
-        static Matcher matcher;
+        static Matcher devicePatternMatcher;
 
-        public static boolean isDeviceValid(String device) {
-            matcher = pattern.matcher(device);
-            if (matcher.matches()) {
-                String[] deviceLocationNumber = device.split(SPLITTER);
-                boolean isDeviceTypeValid = validateDeviceType(deviceLocationNumber[DEVICE_TYPE_INDEX]);
-                boolean isLocationValid = validateLocation(deviceLocationNumber[LOCATION_INDEX]);
-                if( isDeviceTypeValid && isLocationValid){
-                    log.info("VALID DEVICE {}",device);
-                    return true;
-                }
-                else{
-                    StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("THE DEVICE {} IS INVALID DUE TO:");
-                    if(!isLocationValid)
-                        stringBuilder.append(" LOCATION \n");
-                    if(!isDeviceTypeValid)
-                        stringBuilder.append(" DEVICE TYPE \n");
-
-                    log.warn(stringBuilder.toString(), device);
-                    return false;
-                }
+        public static boolean isDeviceValid(String deviceName) {
+            devicePatternMatcher = pattern.matcher(deviceName);
+            if (devicePatternMatcher.matches()) {
+                return isDeviceFake(deviceName);
             } else {
-                log.warn("DEVICE {} DOES NOT MATCH THE PATTERN", device);
+                log.warn("DEVICE {} DOES NOT MATCH THE PATTERN", deviceName);
                 return false;
             }
+        }
+
+        private static boolean isDeviceFake(String device){
+            String[] deviceLocationNumber = device.split(SPLITTER);
+            boolean isDeviceTypeValid = validateDeviceType(deviceLocationNumber[DEVICE_TYPE_INDEX]);
+            boolean isLocationValid = validateLocation(deviceLocationNumber[LOCATION_INDEX]);
+            if( isDeviceTypeValid && isLocationValid){
+                log.info("VALID DEVICE {}",device);
+                return true;
+            }
+            else{
+                prepareWarningStatement(device, isLocationValid, isDeviceTypeValid);
+                return false;
+            }
+        }
+
+        private static void prepareWarningStatement(String device, boolean isLocationValid, boolean isDeviceTypeValid){
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("THE DEVICE {} IS INVALID DUE TO: \n");
+            if(!isLocationValid)
+                stringBuilder.append(" LOCATION \n");
+            if(!isDeviceTypeValid)
+                stringBuilder.append(" DEVICE TYPE \n");
+
+            log.warn(stringBuilder.toString(), device);
         }
 
         private static boolean validateDeviceType(String deviceTypePart) {

@@ -16,7 +16,7 @@ enum Locations {
 
     boolean isValid(String input){
         for(Locations location : Locations.values()){
-            if (input.toUpperCase().equals(location.name())){
+            if (input.equals(location.name())){
                 return true;
             }
         }

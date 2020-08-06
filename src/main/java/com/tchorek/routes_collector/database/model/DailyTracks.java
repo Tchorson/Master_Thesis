@@ -2,7 +2,6 @@ package com.tchorek.routes_collector.database.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
