@@ -5,6 +5,7 @@ import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.monitoring.service.MonitoringService;
 import com.tchorek.routes_collector.utils.Mapper;
+import javassist.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,9 +36,27 @@ public class DataMonitoringController {
                 return ResponseEntity.ok().body("USER " + verificationData.getUserData() + " IN UNKNOWN AREA at time " + Instant.ofEpochSecond(verificationData.getDate()));
             }
 
-        } catch (Exception e) {
-            log.warn("PLEASE CONTACT SANEPID IMMEDIATELY FOR {}", verificationData.getUserData());
-            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+        }
+        catch ( Exception e ) {
+            if (e instanceof NotFoundException){
+                log.info("USER NOT FOUND IN DATABASE");
+                return ResponseEntity.ok(HttpStatus.NOT_FOUND);
+            }
+            else {
+                log.warn("PLEASE CONTACT SANEPID IMMEDIATELY FOR {}", verificationData.getUserData());
+                return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+            }
+        }
+    }
+
+    @PostMapping(path = "/report", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity reportFugitive(@RequestBody String fugitive){
+        try{
+            monitoringService.removeFugitiveFromService(fugitive);
+            return ResponseEntity.ok(HttpStatus.OK);
+        }
+        catch( Exception e){
+            return ResponseEntity.ok(HttpStatus.NOT_FOUND);
         }
     }
 

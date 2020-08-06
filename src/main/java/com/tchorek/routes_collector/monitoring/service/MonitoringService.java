@@ -8,13 +8,17 @@ import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import com.tchorek.routes_collector.database.repositories.FugitiveRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
 import com.tchorek.routes_collector.utils.Mapper;
+import javassist.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Log4j2
 @Service
@@ -97,9 +101,12 @@ public class MonitoringService {
         Optional<Registration> userEntryCoordinates = registrationRepository.findById(currentUserCoordinates.getUserData());
         if (userEntryCoordinates.isEmpty() || !userEntryCoordinates.get().getApproved()) throw new Exception("Unapproved user or a fugitive");
         if (isUserAtHome(userEntryCoordinates.get(), currentUserCoordinates)) {
-            removeUserFromMonitoring(currentUserCoordinates.getUserData());
-            registrationRepository.deleteById(currentUserCoordinates.getUserData());
-            return true;
+            try {
+                removeUserFromMonitoring(currentUserCoordinates.getUserData());
+                return true;
+            }catch (NotFoundException e){
+                throw new NotFoundException("User not in database");
+            }
         }
         return false;
     }
@@ -130,8 +137,21 @@ public class MonitoringService {
         lastUserActivity.put(userDailyTracks.getPhoneNumber(), userDailyTracks.getDate());
     }
 
-    public void removeUserFromMonitoring(String userNumber) {
-        lastUserActivity.remove(userNumber);
-        usersWithUnknownStatus.remove(userNumber);
+    public void removeUserFromMonitoring(String userNumber) throws NotFoundException {
+        if(lastUserActivity.containsKey(userNumber) || usersWithUnknownStatus.containsKey(userNumber)){
+            lastUserActivity.remove(userNumber);
+            usersWithUnknownStatus.remove(userNumber);
+        }
+        else
+            throw new NotFoundException("Removing from collections failed");
+    }
+
+    public void removeFugitiveFromService(String user) throws Exception {
+        if(fugitives.containsKey(user)){
+            fugitives.remove(user);
+            fugitiveRepository.deleteById(user);
+        }
+        else
+            throw new Exception("NOT FOUND");
     }
 }
