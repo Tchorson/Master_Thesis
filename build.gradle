@@ -24,7 +24,7 @@ dependencies {
     compile group: 'org.projectlombok', name: 'lombok', version:lombok
     compile group: 'com.h2database', name: 'h2', version:hibernate
     compile group: 'org.postgresql', name: 'postgresql', version: postgres
-
+    compile group: 'org.flywaydb', name: 'flyway-core', version: flyway
 
 }
 
