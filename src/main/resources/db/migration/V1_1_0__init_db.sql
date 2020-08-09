@@ -1,8 +1,3 @@
-DROP TABLE IF EXISTS user_routes_daily;
-DROP TABLE IF EXISTS user_routes_history;
-DROP TABLE IF EXISTS user_registrations;
-DROP TABLE IF EXISTS fugitives;
-
 CREATE TABLE IF NOT EXISTS user_registrations
 (
     user_id character varying(15) COLLATE pg_catalog."default" NOT NULL,
