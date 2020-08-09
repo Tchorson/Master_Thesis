@@ -3,7 +3,7 @@ package com.tchorek.routes_collector.utils;
 import lombok.Getter;
 
 @Getter
-enum DeviceType {
+public enum DeviceType {
     RPI("RPI");
 
     private String deviceType;

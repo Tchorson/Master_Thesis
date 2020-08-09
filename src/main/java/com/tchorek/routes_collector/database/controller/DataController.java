@@ -5,6 +5,7 @@ import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.monitoring.service.MonitoringService;
 import com.tchorek.routes_collector.utils.Mapper;
+import com.tchorek.routes_collector.utils.Timer;
 import com.tchorek.routes_collector.utils.Validator;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,14 +27,17 @@ public class DataController {
     @Autowired
     MonitoringService monitoringService;
 
+    @Autowired
+    Validator validator;
+
     @PostMapping(path = "/save-user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
-        if(Validator.DeviceValidator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegisteredAndEligibleForWalk(data.getUser())){
+        if(validator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegisteredAndEligibleForWalk(data.getUser())){
             databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
             monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
             return ResponseEntity.ok(HttpStatus.OK);
         }
-        log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}",data.getUser(), Instant.ofEpochSecond(Instant.now().getEpochSecond()));
+        log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}",data.getUser(), Timer.getCurrentTimeInSeconds());
         return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
     }
 

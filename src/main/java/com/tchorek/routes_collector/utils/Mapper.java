@@ -1,7 +1,7 @@
 package com.tchorek.routes_collector.utils;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
-import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.model.DailyRecord;
 import com.tchorek.routes_collector.database.model.Fugitive;
 import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.message.json.BluetoothData;
@@ -14,11 +14,11 @@ public class Mapper {
 
     private static final Boolean NEW_APPROVAL = null;
 
-    public static DailyTracks mapJsonToObject(BluetoothData input){
-        return new DailyTracks(input.getUser(),input.getLocation(), Instant.now().getEpochSecond());
+    public static DailyRecord mapJsonToObject(BluetoothData input){
+        return new DailyRecord(input.getUser(),input.getLocation(), Timer.getCurrentTimeInSeconds());
     }
 
-    public static BluetoothData mapObjectToJson(DailyTracks input){
+    public static BluetoothData mapObjectToJson(DailyRecord input){
         return new BluetoothData(input.getPhoneNumber(),input.getLocation());
     }
 
@@ -31,7 +31,7 @@ public class Mapper {
     }
 
     public static Fugitive mapJsonToFugitive(RegistrationData input){
-        return new Fugitive(input.getUserData(), input.getLatitude(), input.getLongitude(), input.getDate());
+        return new Fugitive(input.getUserData(), input.getLatitude(), input.getLongitude(), Timer.getCurrentTimeInSeconds());
     }
 
     public static Map<String, Long> mapFugitivesToMap(Iterable<Fugitive> input){

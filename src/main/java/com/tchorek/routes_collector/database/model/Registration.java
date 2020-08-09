@@ -3,6 +3,8 @@ package com.tchorek.routes_collector.database.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sun.istack.Nullable;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +15,7 @@ import java.time.Instant;
 
 @Getter
 @RequiredArgsConstructor
+@EqualsAndHashCode
 @Entity(name = "user_registrations")
 public class Registration {
 
@@ -33,7 +36,7 @@ public class Registration {
     @Column(name = "longitude", nullable = false)
     private Float longitude;
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude()
     @Column(name = "approved")
     private Boolean approved;
 
@@ -44,7 +47,7 @@ public class Registration {
     }
 
     @JsonCreator
-    public Registration(@JsonProperty("userData") String userData, @JsonProperty("walkDate") long date, @JsonProperty("lat") Float latitude, @JsonProperty("lng") Float longitude, @JsonProperty("approved") boolean isApproved ) {
+    public Registration(@JsonProperty("userData") String userData, @JsonProperty("walkDate") long date, @JsonProperty("lat") Float latitude, @JsonProperty("lng") Float longitude, @JsonProperty("approved") Boolean isApproved ) {
         this.phoneNumber = userData;
         this.walkTimestamp = date;
         this.latitude = latitude;

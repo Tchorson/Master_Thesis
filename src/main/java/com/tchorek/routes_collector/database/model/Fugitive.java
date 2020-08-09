@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.database.model;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.time.Instant;
 @Getter
 @AllArgsConstructor
 @RequiredArgsConstructor
+@EqualsAndHashCode
 @Entity
 @Table(name = "fugitives")
 public class Fugitive {

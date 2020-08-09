@@ -10,9 +10,9 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @Entity
 @Table(name = "user_routes_daily")
-public class DailyTracks extends  BaseTrack{
+public class DailyRecord extends  BaseTrack{
 
-    public DailyTracks(String phoneNumber, String location, long date) {
+    public DailyRecord(String phoneNumber, String location, long date) {
         super(phoneNumber, location, date);
     }
 }

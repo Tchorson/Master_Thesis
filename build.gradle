@@ -25,6 +25,10 @@ dependencies {
     compile group: 'com.h2database', name: 'h2', version:hibernate
     compile group: 'org.postgresql', name: 'postgresql', version: postgres
     compile group: 'org.flywaydb', name: 'flyway-core', version: flyway
+    compile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: juniper
+    compile group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito
+    compile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: juniper
+    compile group: 'org.junit.platform', name: 'junit-platform-runner', version: runner
 
 }
 

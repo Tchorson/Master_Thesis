@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.management.openmbean.KeyAlreadyExistsException;
 import java.time.Instant;
 
 @Log4j2
@@ -30,22 +31,25 @@ public class DataMonitoringController {
     @PostMapping(path = "/verify", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity verifyUserLocation(@RequestBody RegistrationData verificationData) {
         try {
-            if (monitoringService.isUserCurrentLocationValid(verificationData)) return ResponseEntity.ok(HttpStatus.OK);
+            if (monitoringService.isUserAtHome(verificationData)) return ResponseEntity.ok(HttpStatus.OK);
             else {
-                monitoringService.claimUserAsFugitive(verificationData);
+                databaseService.saveNewFugitiveInDB(verificationData);
+                monitoringService.addNewFugitive(verificationData);
                 return ResponseEntity.ok().body("USER " + verificationData.getUserData() + " IN UNKNOWN AREA at time " + Instant.ofEpochSecond(verificationData.getDate()));
             }
-
         }
         catch ( Exception e ) {
             if (e instanceof NotFoundException){
-                log.info("USER NOT FOUND IN DATABASE");
+                log.warn("USER NOT FOUND IN DATABASE");
                 return ResponseEntity.ok(HttpStatus.NOT_FOUND);
             }
-            else {
-                log.warn("PLEASE CONTACT SANEPID IMMEDIATELY FOR {}", verificationData.getUserData());
-                return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+            if (e instanceof KeyAlreadyExistsException){
+                log.warn("FUGITIVE ALREADY IN SYSTEM");
+                return ResponseEntity.ok(HttpStatus.FOUND);
             }
+
+            log.warn("PLEASE CONTACT SANEPID IMMEDIATELY FOR {}", verificationData.getUserData());
+            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
         }
     }
 

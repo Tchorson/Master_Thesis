@@ -2,6 +2,7 @@ package com.tchorek.routes_collector.database.model;
 
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.time.Instant;
 @Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
 @RequiredArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public abstract class BaseTrack {
 
     @Id

@@ -1,20 +1,21 @@
 package com.tchorek.routes_collector.monitoring.service;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
-import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.model.DailyRecord;
 import com.tchorek.routes_collector.database.model.Fugitive;
 import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import com.tchorek.routes_collector.database.repositories.FugitiveRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
 import com.tchorek.routes_collector.utils.Mapper;
+import com.tchorek.routes_collector.utils.Timer;
 import javassist.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,7 +50,7 @@ public class MonitoringService {
 
     @Scheduled(cron = "0 0/5 * * * *")
     public void findAllInactiveUsers() {
-        long currentTime = Instant.now().getEpochSecond();
+        long currentTime = Timer.getCurrentTimeInSeconds();
         markUsersAsUnknown(currentTime);
         log.info("current unknown users: \n{}", usersWithUnknownStatus.keySet().toString());
         //Todo: add sms mechanism for inactive people
@@ -57,7 +58,7 @@ public class MonitoringService {
 
     @Scheduled(cron = "30 0/3 * * * *")
     public void findAllFugitives(){
-        long currentTime = Instant.now().getEpochSecond();
+        long currentTime = Timer.getCurrentTimeInSeconds();
         removeReactivatedUsers(currentTime);
         markUsersAsFugitive(currentTime);
         removeFugitivesFromUnknownMap();
@@ -66,12 +67,19 @@ public class MonitoringService {
 
     private void markUsersAsFugitive(long currentTime){
         usersWithUnknownStatus.entrySet().stream().filter(stringLongEntry -> currentTime - stringLongEntry.getValue() > MISSING_PERIOID)
-                .forEach(userUnknownStatus -> {
-                    if (!fugitives.containsKey(userUnknownStatus.getKey())) {
-                        fugitives.put(userUnknownStatus.getKey(), Instant.now().getEpochSecond());
-                        fugitiveRepository.save(new Fugitive(userUnknownStatus.getKey(), UNKNOWN_COORDINATE, UNKNOWN_COORDINATE, userUnknownStatus.getValue()));
+                .forEach(userWithUnknownStatus -> {
+                    String phoneNumber = userWithUnknownStatus.getKey();
+                    if (!fugitives.containsKey(phoneNumber)) {
+                        fugitives.put(phoneNumber, Timer.getCurrentTimeInSeconds());
+                        fugitiveRepository.save(new Fugitive(phoneNumber, UNKNOWN_COORDINATE, UNKNOWN_COORDINATE, Timer.getCurrentTimeInSeconds()));
                     }
                 });
+    }
+
+    public void addNewFugitive(RegistrationData verificationData){
+        if(fugitives.containsKey(verificationData.getUserData()))
+            throw new KeyAlreadyExistsException("Fugitive is already in system");
+        fugitives.put(verificationData.getUserData(), Timer.getCurrentTimeInSeconds());
     }
 
     private void removeFugitivesFromUnknownMap(){
@@ -88,19 +96,15 @@ public class MonitoringService {
         lastUserActivity.entrySet().stream()
                 .filter(userLastTrack -> currentTime - userLastTrack.getValue() > INACTIVITY_PERIOID).forEach(userLastActivity -> {
             if (!usersWithUnknownStatus.containsKey(userLastActivity.getKey())) {
-                usersWithUnknownStatus.put(userLastActivity.getKey(), Instant.now().getEpochSecond());
+                usersWithUnknownStatus.put(userLastActivity.getKey(), Timer.getCurrentTimeInSeconds());
             }
         });
     }
 
-    public void claimUserAsFugitive(RegistrationData currentUserData) {
-        fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
-    }
-
-    public boolean isUserCurrentLocationValid(RegistrationData currentUserCoordinates) throws Exception {
-        Optional<Registration> userEntryCoordinates = registrationRepository.findById(currentUserCoordinates.getUserData());
-        if (userEntryCoordinates.isEmpty() || !userEntryCoordinates.get().getApproved()) throw new Exception("Unapproved user or a fugitive");
-        if (isUserAtHome(userEntryCoordinates.get(), currentUserCoordinates)) {
+    public boolean isUserAtHome(RegistrationData currentUserCoordinates) throws Exception {
+        Optional<Registration> userCoordinatesDuringRegistration = registrationRepository.findById(currentUserCoordinates.getUserData());
+        if (userCoordinatesDuringRegistration.isEmpty() || !userCoordinatesDuringRegistration.get().getApproved()) throw new Exception("Unapproved user");
+        if (isUserAtHome(userCoordinatesDuringRegistration.get(), currentUserCoordinates)) {
             try {
                 removeUserFromMonitoring(currentUserCoordinates.getUserData());
                 return true;
@@ -133,8 +137,8 @@ public class MonitoringService {
         return usersWithUnknownStatus.keySet();
     }
 
-    public void saveUserActivity(DailyTracks userDailyTracks) {
-        lastUserActivity.put(userDailyTracks.getPhoneNumber(), userDailyTracks.getDate());
+    public void saveUserActivity(DailyRecord userDailyRecord) {
+        lastUserActivity.put(userDailyRecord.getPhoneNumber(), userDailyRecord.getDate());
     }
 
     public void removeUserFromMonitoring(String userNumber) throws NotFoundException {

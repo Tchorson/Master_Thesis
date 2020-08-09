@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.database.service;
 
-import com.tchorek.routes_collector.database.model.DailyTracks;
+import com.tchorek.routes_collector.database.json.RegistrationData;
+import com.tchorek.routes_collector.database.model.DailyRecord;
 import com.tchorek.routes_collector.database.model.Fugitive;
 import com.tchorek.routes_collector.database.model.HistoryTracks;
 import com.tchorek.routes_collector.database.model.Registration;
@@ -8,12 +9,14 @@ import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
 import com.tchorek.routes_collector.database.repositories.FugitiveRepository;
 import com.tchorek.routes_collector.database.repositories.HistoryTrackRepository;
 import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
+import com.tchorek.routes_collector.utils.Mapper;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.List;
 import java.util.Set;
 
@@ -43,6 +46,12 @@ public class DatabaseService {
         registrationRepository.deleteRegistrations();
     }
 
+    public void saveNewFugitiveInDB(RegistrationData currentUserData) {
+        if (fugitiveRepository.findById(currentUserData.getUserData()).isPresent())
+            throw new KeyAlreadyExistsException("Fugitive is already in system");
+        fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
+    }
+
     public boolean isApprovalInDB(Registration approval){
         return registrationRepository.findById(approval.getPhoneNumber()).isPresent();
     }
@@ -63,8 +72,8 @@ public class DatabaseService {
         return historyTrackRepository.getUserHistory(user);
     }
 
-    public void saveTrackOfUser(DailyTracks userDailyTracks) {
-        dailyTrackRepository.save(userDailyTracks);
+    public void saveTrackOfUser(DailyRecord userDailyRecord) {
+        dailyTrackRepository.save(userDailyRecord);
     }
 
     public void saveRegistration(Registration registration){
@@ -79,7 +88,7 @@ public class DatabaseService {
        return registrationRepository.findAll();
     }
 
-    public List<DailyTracks> getListOfUsersByLocationAndTime(String location, long timestamp) {
+    public List<DailyRecord> getListOfUsersByLocationAndTime(String location, long timestamp) {
         return dailyTrackRepository.getListOfUsersByLocationAndTime(location, timestamp);
     }
 
@@ -87,15 +96,15 @@ public class DatabaseService {
         return dailyTrackRepository.getUsersWhoMetUserRecently(number, startTime, stopTime);
     }
 
-    public Iterable<DailyTracks> getAllData() {
+    public Iterable<DailyRecord> getAllData() {
         return dailyTrackRepository.findAll();
     }
 
-    public Iterable<DailyTracks> getUserRoute(String phoneNumber) {
+    public Iterable<DailyRecord> getUserRoute(String phoneNumber) {
         return dailyTrackRepository.getUserRoute(phoneNumber);
     }
 
-    public Iterable<DailyTracks> getUserRouteFromParticularTime(String phoneNumber, long startDate, long stopDate) {
+    public Iterable<DailyRecord> getUserRouteFromParticularTime(String phoneNumber, long startDate, long stopDate) {
         return dailyTrackRepository.getUserRouteFromParticularTime(phoneNumber, startDate, stopDate);
     }
 
