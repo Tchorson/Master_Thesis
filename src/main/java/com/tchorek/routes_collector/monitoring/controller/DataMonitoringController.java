@@ -5,6 +5,7 @@ import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.monitoring.service.MonitoringService;
 import com.tchorek.routes_collector.utils.Mapper;
+import com.tchorek.routes_collector.utils.Timer;
 import javassist.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
-import java.time.Instant;
 
 @Log4j2
 @Controller
@@ -34,8 +34,9 @@ public class DataMonitoringController {
             if (monitoringService.isUserAtHome(verificationData)) return ResponseEntity.ok(HttpStatus.OK);
             else {
                 databaseService.saveNewFugitiveInDB(verificationData);
-                monitoringService.addNewFugitive(verificationData);
-                return ResponseEntity.ok().body("USER " + verificationData.getUserData() + " IN UNKNOWN AREA at time " + Instant.ofEpochSecond(verificationData.getDate()));
+                monitoringService.addNewFugitive(verificationData.getUserData());
+                return ResponseEntity.ok().body("USER " + verificationData.getUserData() + "" +
+                        " IN UNKNOWN AREA at time " + Timer.getFullDate(verificationData.getDate()));
             }
         }
         catch ( Exception e ) {
@@ -87,6 +88,7 @@ public class DataMonitoringController {
         decisions.forEach(decision -> {
             if (databaseService.isApprovalInDB(decision)) {
                 log.info("APPROVING {}",decision.getPhoneNumber());
+                //Todo: Send sms service
                 databaseService.saveRegistration(decision);
             }
             else

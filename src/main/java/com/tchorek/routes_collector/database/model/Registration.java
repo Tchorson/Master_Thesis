@@ -3,7 +3,7 @@ package com.tchorek.routes_collector.database.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sun.istack.Nullable;
+import com.tchorek.routes_collector.utils.Timer;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import java.time.Instant;
 
 @Getter
 @RequiredArgsConstructor
@@ -42,7 +41,7 @@ public class Registration {
 
     @Override
     public String toString() {
-        return "Registration " + phoneNumber + " " + Instant.ofEpochSecond(walkTimestamp) + " "
+        return "Registration " + phoneNumber + " " + Timer.getFullDate(walkTimestamp) + " "
                 + latitude + ", " + longitude+ " "+ approved +"\n";
     }
 

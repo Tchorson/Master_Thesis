@@ -6,7 +6,6 @@ import com.tchorek.routes_collector.database.model.Fugitive;
 import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.message.json.BluetoothData;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,7 +14,7 @@ public class Mapper {
     private static final Boolean NEW_APPROVAL = null;
 
     public static DailyRecord mapJsonToObject(BluetoothData input){
-        return new DailyRecord(input.getUser(),input.getLocation(), Timer.getCurrentTimeInSeconds());
+        return new DailyRecord(input.getUser(),input.getDeviceName(), Timer.getCurrentTimeInSeconds());
     }
 
     public static BluetoothData mapObjectToJson(DailyRecord input){

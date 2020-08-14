@@ -1,5 +1,6 @@
 package com.tchorek.routes_collector.database.model;
 
+import com.tchorek.routes_collector.utils.Timer;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -9,7 +10,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.time.Instant;
 
 @Getter
 @AllArgsConstructor
@@ -34,6 +34,6 @@ public class Fugitive {
 
     @Override
     public String toString() {
-        return "Track" + phoneNumber + " " + latitude + " " + longitude+ " "+ Instant.ofEpochSecond(date) +"\n";
+        return "Track" + phoneNumber + " " + latitude + " " + longitude+ " "+ Timer.getFullDate(date) +"\n";
     }
 }

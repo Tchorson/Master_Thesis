@@ -15,11 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-
 @Log4j2
 @Controller
-public class DataController {
+public class UserDataController {
 
     @Autowired
     DatabaseService databaseService;
@@ -30,44 +28,50 @@ public class DataController {
     @Autowired
     Validator validator;
 
-    @PostMapping(path = "/save-user-track", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity saveUserTrack(@RequestBody BluetoothData data){
-        if(validator.isDeviceValid(data.getLocation()) && monitoringService.checkIfUserIsRegisteredAndEligibleForWalk(data.getUser())){
-            databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
-            monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
-            return ResponseEntity.ok(HttpStatus.OK);
-        }
-        log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}",data.getUser(), Timer.getCurrentTimeInSeconds());
-        return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+    @PostMapping(path = "/point", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity saveUserLocation(@RequestBody BluetoothData data){
+        return analyzeData(data);
     }
 
-    @GetMapping(path = "/all-data")
-    public ResponseEntity getAllData(){
-        return ResponseEntity.ok().body(databaseService.getAllData());
+    @GetMapping(path = "/daily-data")
+    public ResponseEntity getDailyData(){
+        return ResponseEntity.ok().body(databaseService.getDailyData());
     }
 
     @GetMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUsersWhoMetUserRecently(@RequestBody ServerData phoneWithTime){
-        return ResponseEntity.ok().body(databaseService.getUsersWhoMetUserRecently(phoneWithTime.getUserData(), phoneWithTime.getStartDate(), phoneWithTime.getStopDate()));
+        return ResponseEntity.ok().body(databaseService.getUsersWhoMetUser(phoneWithTime));
     }
 
-    @GetMapping(path = "/all-user-data", consumes = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/user-daily-route", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUserRoute(@RequestBody String phoneNumber){
-        return ResponseEntity.ok().body(databaseService.getUserRoute(phoneNumber));
+        return ResponseEntity.ok().body(databaseService.getUserDailyRoute(phoneNumber));
     }
 
-    @GetMapping(path = "/all-user-history", consumes = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/user-history", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUserHistory(@RequestBody String phoneNumber){
         return ResponseEntity.ok().body(databaseService.getUserHistory(phoneNumber));
     }
 
-    @GetMapping(path = "/user-route", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getUserRouteFromParticularTime(@RequestBody ServerData phoneWithTime) {
-        return ResponseEntity.ok().body(databaseService.getUserRouteFromParticularTime(phoneWithTime.getUserData(), phoneWithTime.getStartDate(), phoneWithTime.getStopDate()));
-    }
-
-    @GetMapping(path = "/users-time", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/users-data", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllUsersFromParticularPlaceAndTime(@RequestBody ServerData locationAndTime){
         return ResponseEntity.ok().body(databaseService.getAllUsersFromParticularPlaceAndTime(locationAndTime.getUserData(), locationAndTime.getStartDate(), locationAndTime.getStopDate()));
+    }
+
+    private ResponseEntity analyzeData(BluetoothData data){
+        if(validator.isDeviceValid(data.getDeviceName()) && monitoringService.checkIfUserIsApproved(data.getUser())){
+            databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
+            monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
+            log.debug("USER {} REACHED {} DEVICE", data.getUser(), Timer.getCurrentTimeInSeconds());
+            return ResponseEntity.ok(HttpStatus.OK);
+        }
+        if(validator.isDeviceValid(data.getDeviceName())){
+            log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}",data.getUser(), Timer.getFullDate(Timer.getCurrentTimeInSeconds()));
+        }
+        else {
+            log.warn("UNKNOWN DEVICE ATTEMPT  {} at time {}", data.getDeviceName(), Timer.getFullDate(Timer.getCurrentTimeInSeconds())) ;
+        }
+        return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+
     }
 }

@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.database.service;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
+import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.model.DailyRecord;
 import com.tchorek.routes_collector.database.model.Fugitive;
 import com.tchorek.routes_collector.database.model.HistoryTracks;
@@ -17,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +32,8 @@ public class DatabaseService {
     HistoryTrackRepository historyTrackRepository;
     FugitiveRepository fugitiveRepository;
 
+    private final long TWO_WEEKS_PERIOD = 1468800;
+
     @Autowired
     public DatabaseService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, HistoryTrackRepository historyTrackRepository, FugitiveRepository fugitiveRepository) {
         this.dailyTrackRepository = dailyTrackRepository;
@@ -39,25 +43,20 @@ public class DatabaseService {
     }
 
     @Scheduled(cron = "0 0 * * * *")
-    public void transferHistoricalDataAndClearDatabase() {
+    public void transferDailyDataToHistorical() {
         log.info("Transferring daily data to history records");
         historyTrackRepository.transferDailyDataToHistory();
-        dailyTrackRepository.deleteUsers();
-        registrationRepository.deleteRegistrations();
+        dailyTrackRepository.deleteAll();
+        registrationRepository.deleteVerifiedRegistrations();
     }
 
     public void saveNewFugitiveInDB(RegistrationData currentUserData) {
-        if (fugitiveRepository.findById(currentUserData.getUserData()).isPresent())
-            throw new KeyAlreadyExistsException("Fugitive is already in system");
-        fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
+        if (!fugitiveRepository.findById(currentUserData.getUserData()).isPresent())
+            fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
     }
 
     public boolean isApprovalInDB(Registration approval){
         return registrationRepository.findById(approval.getPhoneNumber()).isPresent();
-    }
-
-    public void saveAllRegistrations(Iterable<Registration> decisions){
-        registrationRepository.saveAll(decisions);
     }
 
     public List<Registration> getAllNewRegistrations(){
@@ -88,27 +87,36 @@ public class DatabaseService {
        return registrationRepository.findAll();
     }
 
-    public List<DailyRecord> getListOfUsersByLocationAndTime(String location, long timestamp) {
-        return dailyTrackRepository.getListOfUsersByLocationAndTime(location, timestamp);
+    public Set<String> getUsersWhoMetUser(ServerData userData){
+        return getAllRecords(getUsersWhoMetUserRecently(userData.getUserData(), userData.getStartDate(), userData.getStopDate()),
+                getUsersWhoMetUserInPast(userData.getUserData(), userData.getStartDate() - TWO_WEEKS_PERIOD, userData.getStartDate()));
     }
 
     public List<String> getUsersWhoMetUserRecently(String number, long startTime, long stopTime) {
         return dailyTrackRepository.getUsersWhoMetUserRecently(number, startTime, stopTime);
     }
 
-    public Iterable<DailyRecord> getAllData() {
+    public List<String> getUsersWhoMetUserInPast(String number, long startTime, long stopTime){
+        return historyTrackRepository.getUsersWhoMetUser(number, startTime, stopTime);
+    }
+
+    public Iterable<DailyRecord> getDailyData() {
         return dailyTrackRepository.findAll();
     }
 
-    public Iterable<DailyRecord> getUserRoute(String phoneNumber) {
-        return dailyTrackRepository.getUserRoute(phoneNumber);
+    public Iterable<DailyRecord> getUserDailyRoute(String phoneNumber) {
+        return dailyTrackRepository.getUserDailyRoute(phoneNumber);
     }
 
-    public Iterable<DailyRecord> getUserRouteFromParticularTime(String phoneNumber, long startDate, long stopDate) {
-        return dailyTrackRepository.getUserRouteFromParticularTime(phoneNumber, startDate, stopDate);
+    public Set<String> getAllUsersFromParticularPlaceAndTime(String location, long startDate, long stopDate) {
+        return getAllRecords(dailyTrackRepository.getAllUsersFromParticularPlaceAndTime(location, startDate, stopDate),
+                historyTrackRepository.getAllUsersFromParticularPlaceAndTime(location, startDate, stopDate));
     }
 
-    public List<String> getAllUsersFromParticularPlaceAndTime(String location, long startDate, long stopDate) {
-        return dailyTrackRepository.getAllUsersFromParticularPlaceAndTime(location, startDate, stopDate);
+    private Set<String> getAllRecords(List<String> dailyData, List<String> historicalData){
+        Set<String> users = new LinkedHashSet<>();
+        users.addAll(dailyData);
+        users.addAll(historicalData);
+        return users;
     }
 }

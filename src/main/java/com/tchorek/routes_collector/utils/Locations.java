@@ -5,8 +5,7 @@ import lombok.Getter;
 @Getter
 enum Locations {
     PARK("PARK"),
-    YARD("YARD"),
-    PRZYARCE2("PRZY-ARCE-2");
+    YARD("YARD");
 
     private String location;
 

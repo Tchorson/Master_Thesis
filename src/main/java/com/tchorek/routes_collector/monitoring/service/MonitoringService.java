@@ -33,9 +33,9 @@ public class MonitoringService {
     Map<String, Long> usersWithUnknownStatus = new LinkedHashMap<>();
     Map<String, Long> fugitives = new LinkedHashMap<>();
 
-    private final float MARGIN_OF_ERROR = 0.0005F;
-    private final short INACTIVITY_PERIOID = 360;
-    private final short MISSING_PERIOID = 180;
+    private final float MARGIN_OF_GPS_ERROR = 0.0005F;
+    private final short USER_MISSING_TIME_SECONDS = 360;
+    private final short TIME_FOR_USER_RETURN = 180;
     private final Float UNKNOWN_COORDINATE  = null;
 
     @Autowired
@@ -50,51 +50,56 @@ public class MonitoringService {
 
     @Scheduled(cron = "0 0/5 * * * *")
     public void findAllInactiveUsers() {
-        long currentTime = Timer.getCurrentTimeInSeconds();
-        markUsersAsUnknown(currentTime);
+        markUsersAsUnknown(Timer.getCurrentTimeInSeconds());
         log.info("current unknown users: \n{}", usersWithUnknownStatus.keySet().toString());
-        //Todo: add sms mechanism for inactive people
+        //Todo: add sms mechanism for informing inactive people
     }
 
     @Scheduled(cron = "30 0/3 * * * *")
-    public void findAllFugitives(){
+    public void findAllFugitivesAmongInactiveUsers(){
         long currentTime = Timer.getCurrentTimeInSeconds();
         removeReactivatedUsers(currentTime);
         markUsersAsFugitive(currentTime);
-        removeFugitivesFromUnknownMap();
+        removeFugitivesUnknownStatus();
         log.info("current fugitive users {}", fugitives.keySet().toString());
     }
 
+    @Scheduled(cron = "2 0 * * * *")
+    public void clearCache() {
+        lastUserActivity.clear();
+        usersWithUnknownStatus.clear();
+        fugitives.clear();
+    }
+
     private void markUsersAsFugitive(long currentTime){
-        usersWithUnknownStatus.entrySet().stream().filter(stringLongEntry -> currentTime - stringLongEntry.getValue() > MISSING_PERIOID)
-                .forEach(userWithUnknownStatus -> {
-                    String phoneNumber = userWithUnknownStatus.getKey();
+        usersWithUnknownStatus.entrySet().stream().filter(userWithUnknownStatus -> currentTime - userWithUnknownStatus.getValue() > TIME_FOR_USER_RETURN)
+                .forEach(tooLongInactiveUser -> {
+                    String phoneNumber = tooLongInactiveUser.getKey();
                     if (!fugitives.containsKey(phoneNumber)) {
-                        fugitives.put(phoneNumber, Timer.getCurrentTimeInSeconds());
+                        addNewFugitive(phoneNumber);
                         fugitiveRepository.save(new Fugitive(phoneNumber, UNKNOWN_COORDINATE, UNKNOWN_COORDINATE, Timer.getCurrentTimeInSeconds()));
                     }
                 });
     }
 
-    public void addNewFugitive(RegistrationData verificationData){
-        if(fugitives.containsKey(verificationData.getUserData()))
-            throw new KeyAlreadyExistsException("Fugitive is already in system");
-        fugitives.put(verificationData.getUserData(), Timer.getCurrentTimeInSeconds());
+    public void addNewFugitive(String user){
+        if(!fugitives.containsKey(user))
+            fugitives.put(user, Timer.getCurrentTimeInSeconds());
     }
 
-    private void removeFugitivesFromUnknownMap(){
+    private void removeFugitivesUnknownStatus(){
         usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> fugitives.containsKey(unknownUser.getKey()))
                 .forEach(wantedUser -> usersWithUnknownStatus.remove(wantedUser.getKey()));
     }
 
     private void removeReactivatedUsers(long currentTime){
-        usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> currentTime - lastUserActivity.get(unknownUser.getKey()) < INACTIVITY_PERIOID)
+        usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> currentTime - lastUserActivity.get(unknownUser.getKey()) < USER_MISSING_TIME_SECONDS)
                 .forEach(reactivatedUser -> usersWithUnknownStatus.remove(reactivatedUser.getKey()));
     }
 
     private void markUsersAsUnknown(long currentTime){
         lastUserActivity.entrySet().stream()
-                .filter(userLastTrack -> currentTime - userLastTrack.getValue() > INACTIVITY_PERIOID).forEach(userLastActivity -> {
+                .filter(userLastTrack -> currentTime - userLastTrack.getValue() > USER_MISSING_TIME_SECONDS).forEach(userLastActivity -> {
             if (!usersWithUnknownStatus.containsKey(userLastActivity.getKey())) {
                 usersWithUnknownStatus.put(userLastActivity.getKey(), Timer.getCurrentTimeInSeconds());
             }
@@ -116,20 +121,11 @@ public class MonitoringService {
     }
 
     private boolean isUserAtHome(Registration userEntryPosition, RegistrationData currentUserData) {
-        return Math.abs(currentUserData.getLatitude() - userEntryPosition.getLatitude()) <= MARGIN_OF_ERROR
-                && Math.abs(currentUserData.getLongitude() - userEntryPosition.getLongitude()) <= MARGIN_OF_ERROR;
+        return Math.abs(currentUserData.getLatitude() - userEntryPosition.getLatitude()) <= MARGIN_OF_GPS_ERROR
+                && Math.abs(currentUserData.getLongitude() - userEntryPosition.getLongitude()) <= MARGIN_OF_GPS_ERROR;
     }
 
-    @Scheduled(cron = "5 0 * * * *")
-    public void clearCache() {
-        lastUserActivity.clear();
-    }
-
-    public void approveUser(Registration approvedUser) {
-        registrationRepository.save(approvedUser);
-    }
-
-    public boolean checkIfUserIsRegisteredAndEligibleForWalk(String userNumber) {
+    public boolean checkIfUserIsApproved(String userNumber) {
         return registrationRepository.selectApprovedUser(userNumber) > 0;
     }
 

@@ -16,11 +16,11 @@ public class BluetoothData {
     private String user;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private String location;
+    private String deviceName;
 
     @JsonCreator
-    public BluetoothData(@JsonProperty("user") String user, @JsonProperty("deviceLocation") String location) {
+    public BluetoothData(@JsonProperty("user") String user, @JsonProperty("deviceLocation") String deviceName) {
         this.user = user;
-        this.location = location;
+        this.deviceName = deviceName;
     }
 }

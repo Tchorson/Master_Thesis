@@ -7,4 +7,6 @@ public class Timer {
     public static long getCurrentTimeInSeconds(){
         return Instant.now().getEpochSecond();
     }
+
+    public static Instant getFullDate(long unixTimestamp){ return Instant.ofEpochSecond(unixTimestamp);}
 }

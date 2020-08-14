@@ -3,13 +3,11 @@ package com.tchorek.routes_collector.database.json;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tchorek.routes_collector.utils.Timer;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
-
-@Setter
 @Getter
 @EqualsAndHashCode
 public class RegistrationData {
@@ -36,11 +34,6 @@ public class RegistrationData {
 
     @Override
     public String toString() {
-        return "RegistrationData{" +
-                "userData='" + userData + '\'' +
-                ", date=" + Instant.ofEpochSecond(date)  +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
-                '}';
+        return "Registration user " + userData +" " + Timer.getFullDate(date) + " lat: " + latitude +" lng: " + longitude;
     }
 }

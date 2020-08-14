@@ -1,13 +1,13 @@
 package com.tchorek.routes_collector.database.model;
 
 
+import com.tchorek.routes_collector.utils.Timer;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
-import java.time.Instant;
 
 @Getter
 @Entity
@@ -29,6 +29,6 @@ public abstract class BaseTrack {
 
     @Override
     public String toString() {
-        return "Track" + phoneNumber + " " + location + " " + Instant.ofEpochSecond(date) +"\n";
+        return "Track" + phoneNumber + " " + location + " " + Timer.getFullDate(date) +"\n";
     }
 }
