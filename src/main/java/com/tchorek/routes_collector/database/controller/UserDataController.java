@@ -59,17 +59,23 @@ public class UserDataController {
     }
 
     private ResponseEntity analyzeData(BluetoothData data){
-        if(validator.isDeviceValid(data.getDeviceName()) && monitoringService.checkIfUserIsApproved(data.getUser())){
+        String deviceName = data.getDeviceName();
+        String user = data.getUser();
+        if(validator.isDeviceValid(deviceName) && monitoringService.checkIfUserIsRegistered(user)){
+            if(monitoringService.isUserBeforeTime(user)){
+                log.warn("USER {} ARRIVED BEFORE SCHEDULED TIME: {}", user, Timer.getCurrentTimeInSeconds());
+            }
+
             databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));
             monitoringService.saveUserActivity(Mapper.mapJsonToObject(data));
-            log.debug("USER {} REACHED {} DEVICE", data.getUser(), Timer.getCurrentTimeInSeconds());
+            log.debug("USER {} REACHED {} DEVICE", user, Timer.getCurrentTimeInSeconds());
             return ResponseEntity.ok(HttpStatus.OK);
         }
-        if(validator.isDeviceValid(data.getDeviceName())){
-            log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}",data.getUser(), Timer.getFullDate(Timer.getCurrentTimeInSeconds()));
+        if(validator.isDeviceValid(deviceName)){
+            log.warn("UNAUTHORIZED USER IN THE AREA: {} at time {}", user, Timer.getFullDate(Timer.getCurrentTimeInSeconds()));
         }
         else {
-            log.warn("UNKNOWN DEVICE ATTEMPT  {} at time {}", data.getDeviceName(), Timer.getFullDate(Timer.getCurrentTimeInSeconds())) ;
+            log.warn("UNKNOWN DEVICE ATTEMPT  {} at time {}", deviceName, Timer.getFullDate(Timer.getCurrentTimeInSeconds())) ;
         }
         return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
 

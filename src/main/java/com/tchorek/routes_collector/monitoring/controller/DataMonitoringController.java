@@ -84,20 +84,21 @@ public class DataMonitoringController {
     }
 
     @PostMapping(path = "/send-approval-decisions", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity sendAllDecisionsToDB(@RequestBody Iterable<Registration> decisions) {
-        decisions.forEach(decision -> {
+    public ResponseEntity sendAllDecisionsToDB(@RequestBody Registration[] decisions) {
+        for(Registration decision: decisions) {
             if (databaseService.isApprovalInDB(decision)) {
                 log.info("APPROVING {}",decision.getPhoneNumber());
-                //Todo: Send sms service
+                //Todo: Send sms service depending on whether the timestamp has been altered or not
                 databaseService.saveRegistration(decision);
+                monitoringService.logRegistration(decision);
             }
             else
                 log.warn("DENIED APPROVAL FOR UNKNOWN USER {}",decision.getPhoneNumber());
-        });
+        }
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
-    @GetMapping(path = "/get-users-without-decision")
+    @GetMapping(path = "/get-users-without-decision", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllNewApprovals() {
         return ResponseEntity.ok().body(databaseService.getAllNewRegistrations());
     }

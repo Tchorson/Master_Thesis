@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +31,7 @@ public class MonitoringService {
     Map<String, Long> lastUserActivity = new LinkedHashMap<>();
     Map<String, Long> usersWithUnknownStatus = new LinkedHashMap<>();
     Map<String, Long> fugitives = new LinkedHashMap<>();
+    Map<String, Long> registrations = new LinkedHashMap<>();
 
     private final float MARGIN_OF_GPS_ERROR = 0.0005F;
     private final short USER_MISSING_TIME_SECONDS = 360;
@@ -46,11 +46,15 @@ public class MonitoringService {
         this.dailyTrackRepository.getAllUsersWithLastActivity()
                 .forEach(dailyTracks -> lastUserActivity.put(dailyTracks.getPhoneNumber(), dailyTracks.getDate()));
         fugitives.putAll(Mapper.mapFugitivesToMap(fugitiveRepository.findAll()));
+        this.registrationRepository.getAllVerifiedRegistrations().forEach(
+                registration -> registrations.put(registration.getPhoneNumber(), registration.getWalkTimestamp()));
     }
 
     @Scheduled(cron = "0 0/5 * * * *")
     public void findAllInactiveUsers() {
-        markUsersAsUnknown(Timer.getCurrentTimeInSeconds());
+        long currentTime = Timer.getCurrentTimeInSeconds();
+        markUsersAsUnknown(currentTime);
+        checkUsersRegistrations(currentTime);
         log.info("current unknown users: \n{}", usersWithUnknownStatus.keySet().toString());
         //Todo: add sms mechanism for informing inactive people
     }
@@ -69,6 +73,7 @@ public class MonitoringService {
         lastUserActivity.clear();
         usersWithUnknownStatus.clear();
         fugitives.clear();
+        registrations.clear();
     }
 
     private void markUsersAsFugitive(long currentTime){
@@ -106,6 +111,25 @@ public class MonitoringService {
         });
     }
 
+    public void logRegistration(Registration registration){
+        registrations.put(registration.getPhoneNumber(), registration.getWalkTimestamp());
+    }
+
+    private void checkUsersRegistrations(long currentTime){
+        registrations.entrySet().stream().filter(
+                registration -> currentTime - registration.getValue() > USER_MISSING_TIME_SECONDS &&
+                        !lastUserActivity.containsKey(registration.getKey())).forEach(inactiveUserRegistration -> {
+                    if (!usersWithUnknownStatus.containsKey(inactiveUserRegistration.getKey())) {
+                        usersWithUnknownStatus.put(inactiveUserRegistration.getKey(), Timer.getCurrentTimeInSeconds());
+                    }
+                }
+        );
+    }
+
+    public boolean isUserBeforeTime(String user){
+        return registrations.get(user) > Timer.getCurrentTimeInSeconds();
+    }
+
     public boolean isUserAtHome(RegistrationData currentUserCoordinates) throws Exception {
         Optional<Registration> userCoordinatesDuringRegistration = registrationRepository.findById(currentUserCoordinates.getUserData());
         if (userCoordinatesDuringRegistration.isEmpty() || !userCoordinatesDuringRegistration.get().getApproved()) throw new Exception("Unapproved user");
@@ -125,8 +149,8 @@ public class MonitoringService {
                 && Math.abs(currentUserData.getLongitude() - userEntryPosition.getLongitude()) <= MARGIN_OF_GPS_ERROR;
     }
 
-    public boolean checkIfUserIsApproved(String userNumber) {
-        return registrationRepository.selectApprovedUser(userNumber) > 0;
+    public boolean checkIfUserIsRegistered(String userNumber) {
+        return registrationRepository.isUserRegistered(userNumber) > 0;
     }
 
     public Set<String> getAllMissingUsers() {

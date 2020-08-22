@@ -28,11 +28,11 @@ public class Registration {
     private long walkTimestamp;
 
     @JsonInclude()
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude", nullable = false, precision = 9, scale = 6)
     private Float latitude;
 
     @JsonInclude()
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude", nullable = false, precision = 9, scale = 6)
     private Float longitude;
 
     @JsonInclude()
