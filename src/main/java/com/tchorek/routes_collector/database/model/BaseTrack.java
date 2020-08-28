@@ -2,13 +2,11 @@ package com.tchorek.routes_collector.database.model;
 
 
 import com.tchorek.routes_collector.utils.Timer;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
+@Setter
 @Getter
 @Entity
 @Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)

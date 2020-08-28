@@ -1,5 +1,9 @@
 package com.tchorek.routes_collector.database.controller;
 
+import com.tchorek.routes_collector.database.model.DailyRecord;
+import com.tchorek.routes_collector.database.model.HistoryTracks;
+import com.tchorek.routes_collector.encryption.Encryptor;
+import com.tchorek.routes_collector.encryption.EncryptorProperties;
 import com.tchorek.routes_collector.message.json.BluetoothData;
 import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.service.DatabaseService;
@@ -15,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Set;
+
 @Log4j2
 @Controller
 public class UserDataController {
@@ -28,34 +35,49 @@ public class UserDataController {
     @Autowired
     Validator validator;
 
+    @Autowired
+    EncryptorProperties encryptorProperties;
+
     @PostMapping(path = "/point", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity saveUserLocation(@RequestBody BluetoothData data){
+        data.setUser(decryptUser(data.getUser()));
         return analyzeData(data);
     }
 
     @GetMapping(path = "/daily-data")
     public ResponseEntity getDailyData(){
-        return ResponseEntity.ok().body(databaseService.getDailyData());
+        Iterable<DailyRecord> dailyData = databaseService.getDailyData();
+        dailyData.forEach(data -> data.setPhoneNumber(encryptUser(data.getPhoneNumber())));
+        return ResponseEntity.ok().body(dailyData);
     }
 
     @GetMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUsersWhoMetUserRecently(@RequestBody ServerData phoneWithTime){
-        return ResponseEntity.ok().body(databaseService.getUsersWhoMetUser(phoneWithTime));
+        phoneWithTime.setUserData(decryptUser(phoneWithTime.getUserData()));
+        Set<String> users = databaseService.getUsersWhoMetUser(phoneWithTime);
+        users.forEach(this::encryptUser);
+        return ResponseEntity.ok().body(users);
     }
 
     @GetMapping(path = "/user-daily-route", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUserRoute(@RequestBody String phoneNumber){
-        return ResponseEntity.ok().body(databaseService.getUserDailyRoute(phoneNumber));
+        Iterable<DailyRecord> records = databaseService.getUserDailyRoute(decryptUser(phoneNumber));
+        records.forEach(record -> record.setPhoneNumber(encryptUser(record.getPhoneNumber())));
+        return ResponseEntity.ok().body(records);
     }
 
     @GetMapping(path = "/user-history", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUserHistory(@RequestBody String phoneNumber){
-        return ResponseEntity.ok().body(databaseService.getUserHistory(phoneNumber));
+        List<HistoryTracks> userPathsHistory = databaseService.getUserHistory(decryptUser(phoneNumber));
+        userPathsHistory.forEach(user -> user.setPhoneNumber(encryptUser(user.getPhoneNumber())));
+        return ResponseEntity.ok().body(userPathsHistory);
     }
 
     @GetMapping(path = "/users-data", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllUsersFromParticularPlaceAndTime(@RequestBody ServerData locationAndTime){
-        return ResponseEntity.ok().body(databaseService.getAllUsersFromParticularPlaceAndTime(locationAndTime.getUserData(), locationAndTime.getStartDate(), locationAndTime.getStopDate()));
+        Set<String> users = databaseService.getAllUsersFromParticularPlaceAndTime(decryptUser(locationAndTime.getUserData()), locationAndTime.getStartDate(), locationAndTime.getStopDate());
+        users.forEach(this::encryptUser);
+        return ResponseEntity.ok().body(users);
     }
 
     private ResponseEntity analyzeData(BluetoothData data){
@@ -78,6 +100,13 @@ public class UserDataController {
             log.warn("UNKNOWN DEVICE ATTEMPT  {} at time {}", deviceName, Timer.getFullDate(Timer.getCurrentTimeInSeconds())) ;
         }
         return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+    }
 
+    private String encryptUser(String data){
+        return Encryptor.encrypt(data, encryptorProperties.getKey());
+    }
+
+    private String decryptUser(String data){
+        return Encryptor.decrypt(data, encryptorProperties.getKey());
     }
 }

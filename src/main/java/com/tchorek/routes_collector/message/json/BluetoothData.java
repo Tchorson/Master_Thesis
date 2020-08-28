@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Setter
 @Getter
 @EqualsAndHashCode
+@ToString
 public class BluetoothData {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
