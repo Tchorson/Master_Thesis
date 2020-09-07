@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,19 +54,19 @@ public class DatabaseService {
             fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
     }
 
-    public boolean isApprovalInDB(Registration approval){
+    public boolean isApprovalInDB(Registration approval) {
         return registrationRepository.findById(approval.getPhoneNumber()).isPresent();
     }
 
-    public List<Registration> getAllNewRegistrations(){
+    public List<Registration> getAllNewRegistrations() {
         return registrationRepository.getAllNewRegistrations();
     }
 
-    public Set<String> getAllApprovedUsers(){
-       return registrationRepository.getAllApprovedUsers();
+    public Set<String> getAllApprovedUsers() {
+        return registrationRepository.getAllApprovedUsers();
     }
 
-    public List<HistoryTracks> getUserHistory(String user){
+    public List<HistoryTracks> getUserHistory(String user) {
         return historyTrackRepository.getUserHistory(user);
     }
 
@@ -75,19 +74,19 @@ public class DatabaseService {
         dailyTrackRepository.save(userDailyRecord);
     }
 
-    public void saveRegistration(Registration registration){
+    public void saveRegistration(Registration registration) {
         registrationRepository.save(registration);
     }
 
-    public Iterable<Fugitive> getAllFugitives(){
+    public Iterable<Fugitive> getAllFugitives() {
         return fugitiveRepository.findAll();
     }
 
-    public Iterable<Registration> getAllRegisteredUsers(){
-       return registrationRepository.findAll();
+    public Iterable<Registration> getAllRegisteredUsers() {
+        return registrationRepository.findAll();
     }
 
-    public Set<String> getUsersWhoMetUser(ServerData userData){
+    public Set<String> getUsersWhoMetUser(ServerData userData) {
         return getAllRecords(getUsersWhoMetUserRecently(userData.getUserData(), userData.getStartDate(), userData.getStopDate()),
                 getUsersWhoMetUserInPast(userData.getUserData(), userData.getStartDate() - TWO_WEEKS_PERIOD, userData.getStartDate()));
     }
@@ -96,7 +95,7 @@ public class DatabaseService {
         return dailyTrackRepository.getUsersWhoMetUserRecently(number, startTime, stopTime);
     }
 
-    public List<String> getUsersWhoMetUserInPast(String number, long startTime, long stopTime){
+    public List<String> getUsersWhoMetUserInPast(String number, long startTime, long stopTime) {
         return historyTrackRepository.getUsersWhoMetUser(number, startTime, stopTime);
     }
 
@@ -113,7 +112,7 @@ public class DatabaseService {
                 historyTrackRepository.getAllUsersFromParticularPlaceAndTime(location, startDate, stopDate));
     }
 
-    private Set<String> getAllRecords(List<String> dailyData, List<String> historicalData){
+    private Set<String> getAllRecords(List<String> dailyData, List<String> historicalData) {
         Set<String> users = new LinkedHashSet<>();
         users.addAll(dailyData);
         users.addAll(historicalData);

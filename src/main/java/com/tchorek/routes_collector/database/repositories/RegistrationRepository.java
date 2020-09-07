@@ -29,5 +29,5 @@ public interface RegistrationRepository extends CrudRepository<Registration, Str
     void deleteVerifiedRegistrations();
 
     @Query(value = "SELECT COUNT(*) FROM user_registrations WHERE user_id = :user_id AND approved = true", nativeQuery = true)
-    int isUserRegistered(@Param("user_id") String userId);
+    int findUserRegistration(@Param("user_id") String userId);
 }
