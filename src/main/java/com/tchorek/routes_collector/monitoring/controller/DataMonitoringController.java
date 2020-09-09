@@ -26,6 +26,7 @@ import java.util.Set;
 
 @Log4j2
 @Controller
+@CrossOrigin
 public class DataMonitoringController {
 
     @Autowired
@@ -94,7 +95,6 @@ public class DataMonitoringController {
 
     @PutMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerUser(@RequestBody RegistrationData registration) { //Todo: add user token authentication
-
         registration.setUserData(decryptUser(registration.getUserData()));
         Registration mappedObj = Mapper.mapJsonToObject(registration);
         databaseService.saveRegistration(mappedObj);
