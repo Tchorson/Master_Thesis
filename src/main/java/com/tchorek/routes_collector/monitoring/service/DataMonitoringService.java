@@ -65,7 +65,6 @@ public class DataMonitoringService {
     @Scheduled(cron = "30 0/3 * * * *")
     public void findAllFugitivesAmongInactiveUsers() {
         long currentTime = Timer.getCurrentTimeInSeconds();
-        removeReactivatedUsers(currentTime);
         markUsersAsFugitive(currentTime);
         removeFugitivesUnknownStatus();
         log.info("current fugitive users {}", fugitives.keySet().toString());
@@ -82,7 +81,6 @@ public class DataMonitoringService {
     @Scheduled(cron = "0 0/1 * * * *")
     public void checkUsersSessions() {
         adminRepository.removeInactiveSessions(Timer.getCurrentTimeInSeconds() - USER_MISSING_TIME_SECONDS);
-        log.info("User session check");
     }
 
     private void markUsersAsFugitive(long currentTime) {
@@ -104,12 +102,6 @@ public class DataMonitoringService {
     private void removeFugitivesUnknownStatus() {
         usersWithUnknownStatus.entrySet().stream().filter(unknownUser -> fugitives.containsKey(unknownUser.getKey()))
                 .forEach(wantedUser -> usersWithUnknownStatus.remove(wantedUser.getKey()));
-    }
-
-    private void removeReactivatedUsers(long currentTime) {
-        usersWithUnknownStatus.entrySet().stream().filter(
-                unknownUser -> currentTime - unknownUser.getValue() < USER_MISSING_TIME_SECONDS)
-                .forEach(reactivatedUser -> usersWithUnknownStatus.remove(reactivatedUser.getKey()));
     }
 
     private void markUsersAsUnknown(long currentTime) {
@@ -170,6 +162,7 @@ public class DataMonitoringService {
 
     public void saveUserActivity(DailyRecord userDailyRecord) {
         lastUserActivity.put(userDailyRecord.getPhoneNumber(), userDailyRecord.getDate());
+        usersWithUnknownStatus.remove(userDailyRecord.getPhoneNumber());
     }
 
     public void removeUserFromMonitoring(String userNumber) throws NotFoundException {

@@ -56,10 +56,11 @@ public class LoginController {
 
     @PostMapping(path = "/session")
     public ResponseEntity extendSession(@RequestParam(name = "token") String token) {
-        log.info("Extending session for token: {}", token);
-        if (!loginService.isTokenValid(token)) {
+        if (!loginService.isTokenValid(token) && token != null && !token.isEmpty()) {
             return ResponseEntity.ok().body("");
         }
+
+        log.info("Extending session for token: {}", token);
         loginService.extendUserSession(token);
         return ResponseEntity.ok().body(token);
     }

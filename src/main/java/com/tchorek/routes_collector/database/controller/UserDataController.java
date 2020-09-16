@@ -49,7 +49,7 @@ public class UserDataController {
         return analyzeData(data);
     }
 
-    @GetMapping(path = "/daily-data")
+    @GetMapping(path = "/daily-data", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDailyData(@RequestParam(name = "token") String token) {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);

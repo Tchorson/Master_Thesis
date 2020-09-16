@@ -166,4 +166,19 @@ public class DataMonitoringController {
     private String decryptUser(String data) {
         return Encryptor.decrypt(data, encryptorProperties.getKey(), encryptorProperties.getIv());
     }
+
+    @PostMapping(path= "/alert")
+    public ResponseEntity reportFugitives(@RequestBody Fugitive[] fugitivesToReport, @RequestParam(name = "token") String token){
+        if (!loginService.isTokenValid(token)) {
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        }
+        log.info("Reporting fugitives:");
+
+        for (Fugitive fugitive: fugitivesToReport){
+            fugitive.setPhoneNumber(decryptUser(fugitive.getPhoneNumber()));
+            log.info("{}",fugitive.toString());
+        }
+
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
 }
