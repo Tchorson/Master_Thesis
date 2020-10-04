@@ -13,4 +13,10 @@ public class EncryptorProperties {
 
     @Value("${INIT_VECTOR}")
     private String iv;
+
+    @Value("${AES_KEY_REGISTRATION}")
+    private String keyRegistration;
+
+    @Value("${INIT_VECTOR_REGISTRATION}")
+    private String ivRegistration;
 }

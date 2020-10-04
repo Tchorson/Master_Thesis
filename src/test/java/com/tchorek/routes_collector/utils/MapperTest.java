@@ -32,7 +32,7 @@ class MapperTest {
     private DailyRecord dailyRecordModel = new DailyRecord(phoneNumber, device, currentTime);
     private Registration registrationModel = new Registration(phoneNumber,currentTime, latitude, longitude, null);
 
-    private Fugitive fugitive = new Fugitive(phoneNumber, latitude, longitude, currentTime);
+    private Fugitive fugitive = new Fugitive(phoneNumber, latitude, longitude, currentTime, false);
     Iterable<Fugitive> fugitivesCollection = Collections.singletonList(fugitive);
 
     @Test
@@ -45,7 +45,7 @@ class MapperTest {
 
         long currentTime = Timer.getCurrentTimeInSeconds();
         Assert.assertEquals(dailyRecordResult, new DailyRecord(phoneNumber, device, currentTime));
-        Assert.assertEquals(fugitiveResult, new Fugitive(phoneNumber, latitude, longitude, currentTime));
+        Assert.assertEquals(fugitiveResult, new Fugitive(phoneNumber, latitude, longitude, currentTime, false));
         Assert.assertEquals(registrationModelResult, new Registration(phoneNumber, currentTime, latitude , longitude , newApproval));
     }
 

@@ -30,7 +30,7 @@ public class Mapper {
     }
 
     public static Fugitive mapJsonToFugitive(RegistrationData input){
-        return new Fugitive(input.getUserData(), input.getLatitude(), input.getLongitude(), Timer.getCurrentTimeInSeconds());
+        return new Fugitive(input.getUserData(), input.getLatitude(), input.getLongitude(), Timer.getCurrentTimeInSeconds(), false);
     }
 
     public static Map<String, Long> mapFugitivesToMap(Iterable<Fugitive> input){

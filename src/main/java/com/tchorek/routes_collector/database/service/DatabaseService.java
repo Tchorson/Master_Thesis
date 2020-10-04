@@ -17,9 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Log4j2
 @NoArgsConstructor
@@ -30,8 +32,6 @@ public class DatabaseService {
     RegistrationRepository registrationRepository;
     HistoryTrackRepository historyTrackRepository;
     FugitiveRepository fugitiveRepository;
-
-    private final long TWO_WEEKS_PERIOD = 1468800;
 
     @Autowired
     public DatabaseService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, HistoryTrackRepository historyTrackRepository, FugitiveRepository fugitiveRepository) {
@@ -50,7 +50,7 @@ public class DatabaseService {
     }
 
     public void saveNewFugitiveInDB(RegistrationData currentUserData) {
-        if (!fugitiveRepository.findById(currentUserData.getUserData()).isPresent())
+        if (fugitiveRepository.findById(currentUserData.getUserData()).isEmpty())
             fugitiveRepository.save(Mapper.mapJsonToFugitive(currentUserData));
     }
 
@@ -79,7 +79,12 @@ public class DatabaseService {
     }
 
     public Iterable<Fugitive> getAllFugitives() {
-        return fugitiveRepository.findAll();
+        return fugitiveRepository.getAllUnreportedFugitives();
+    }
+
+    public void markReportedFugitives(Fugitive[] listOfFugitives){
+        List<String> phoneNumbers = Arrays.stream(listOfFugitives).map(Fugitive::getPhoneNumber).collect(Collectors.toList());
+        fugitiveRepository.markFugitivesAsReported(phoneNumbers);
     }
 
     public Iterable<Registration> getAllRegisteredUsers() {
@@ -88,19 +93,25 @@ public class DatabaseService {
 
     public Set<String> getUsersWhoMetUser(ServerData userData) {
         return getAllRecords(getUsersWhoMetUserRecently(userData.getUserData(), userData.getStartDate(), userData.getStopDate()),
-                getUsersWhoMetUserInPast(userData.getUserData(), userData.getStartDate() - TWO_WEEKS_PERIOD, userData.getStartDate()));
+                getUsersWhoMetUserInPast(userData.getUserData(), userData.getStartDate(), userData.getStopDate()));
     }
 
     public List<String> getUsersWhoMetUserRecently(String number, long startTime, long stopTime) {
-        return dailyTrackRepository.getUsersWhoMetUserRecently(number, startTime, stopTime);
+        List<String> result = dailyTrackRepository.getUsersWhoMetUserRecently(number, startTime, stopTime);
+        return result;
     }
 
     public List<String> getUsersWhoMetUserInPast(String number, long startTime, long stopTime) {
-        return historyTrackRepository.getUsersWhoMetUser(number, startTime, stopTime);
+        List<String> result = historyTrackRepository.getUsersWhoMetUser(number, startTime, stopTime);
+        return result;
     }
 
     public Iterable<DailyRecord> getDailyData() {
         return dailyTrackRepository.findAll();
+    }
+
+    public Iterable<HistoryTracks> getHistoryData() {
+        return historyTrackRepository.findAll();
     }
 
     public Iterable<DailyRecord> getUserDailyRoute(String phoneNumber) {

@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -60,15 +61,28 @@ public class UserDataController {
         return ResponseEntity.ok().body(dailyData);
     }
 
-    @GetMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/history-data", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getHistoryData(@RequestParam(name = "token") String token) {
+        if (!loginService.isTokenValid(token)) {
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        }
+
+        Iterable<HistoryTracks> historyData = databaseService.getHistoryData();
+        historyData.forEach(data -> data.setPhoneNumber(encryptUser(data.getPhoneNumber())));
+        return ResponseEntity.ok().body(historyData);
+    }
+
+    @PostMapping(path = "/find-users", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getUsersWhoMetUserRecently(@RequestBody ServerData phoneWithTime, @RequestParam(name = "token") String token) {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
         phoneWithTime.setUserData(decryptUser(phoneWithTime.getUserData()));
         Set<String> users = databaseService.getUsersWhoMetUser(phoneWithTime);
-        users.forEach(this::encryptUser);
-        return ResponseEntity.ok().body(users);
+        users.remove(phoneWithTime.getUserData());
+        Set<String> encryptedUsers = new LinkedHashSet<>();
+        users.forEach(user -> encryptedUsers.add(encryptUser(user)));
+        return ResponseEntity.ok().body(encryptedUsers);
     }
 
     @GetMapping(path = "/user-daily-route", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -91,14 +105,15 @@ public class UserDataController {
         return ResponseEntity.ok().body(userPathsHistory);
     }
 
-    @GetMapping(path = "/users-data", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/users-data", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllUsersFromParticularPlaceAndTime(@RequestBody ServerData locationAndTime, @RequestParam(name = "token") String token) {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
         Set<String> users = databaseService.getAllUsersFromParticularPlaceAndTime(decryptUser(locationAndTime.getUserData()), locationAndTime.getStartDate(), locationAndTime.getStopDate());
-        users.forEach(this::encryptUser);
-        return ResponseEntity.ok().body(users);
+        Set<String> encryptedUsers = new LinkedHashSet<>();
+        users.forEach(user -> encryptedUsers.add(encryptUser(user)));
+        return ResponseEntity.ok().body(encryptedUsers);
     }
 
     private ResponseEntity analyzeData(BluetoothData data) {

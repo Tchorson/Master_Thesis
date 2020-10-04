@@ -39,6 +39,7 @@ public class DataMonitoringService {
     private final short USER_MISSING_TIME_SECONDS = 360;
     private final short TIME_FOR_USER_RETURN = 180;
     private final Float UNKNOWN_COORDINATE = null;
+    private final boolean UNREPORTED = false;
 
     @Autowired
     public DataMonitoringService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, FugitiveRepository fugitiveRepository, AdminRepository adminRepository) {
@@ -89,7 +90,7 @@ public class DataMonitoringService {
                     String phoneNumber = tooLongInactiveUser.getKey();
                     if (!fugitives.containsKey(phoneNumber)) {
                         addNewFugitive(phoneNumber);
-                        fugitiveRepository.save(new Fugitive(phoneNumber, UNKNOWN_COORDINATE, UNKNOWN_COORDINATE, Timer.getCurrentTimeInSeconds()));
+                        fugitiveRepository.save(new Fugitive(phoneNumber, UNKNOWN_COORDINATE, UNKNOWN_COORDINATE, Timer.getCurrentTimeInSeconds(), UNREPORTED));
                     }
                 });
     }

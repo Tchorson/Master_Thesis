@@ -6,10 +6,12 @@ import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.encryption.Encryptor;
 import com.tchorek.routes_collector.encryption.EncryptorProperties;
+import com.tchorek.routes_collector.message.service.MessageService;
 import com.tchorek.routes_collector.monitoring.service.DataMonitoringService;
 import com.tchorek.routes_collector.monitoring.service.LoginService;
 import com.tchorek.routes_collector.utils.Mapper;
 import com.tchorek.routes_collector.utils.Timer;
+import com.tchorek.routes_collector.utils.Validator;
 import javassist.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -40,6 +43,12 @@ public class DataMonitoringController {
 
     @Autowired
     EncryptorProperties encryptorProperties;
+
+    @Autowired
+    MessageService messageService;
+
+    @Autowired
+    Validator validator;
 
     @ResponseBody
     @PostMapping(path = "/verify", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -94,11 +103,17 @@ public class DataMonitoringController {
     }
 
     @PutMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity registerUser(@RequestBody RegistrationData registration) { //Todo: add user token authentication
-        registration.setUserData(decryptUser(registration.getUserData()));
-        Registration mappedObj = Mapper.mapJsonToObject(registration);
-        databaseService.saveRegistration(mappedObj);
-        return ResponseEntity.ok(HttpStatus.OK);
+    public ResponseEntity registerUser(@RequestBody RegistrationData registration) {
+        try{
+            registration.setUserData(decryptRegistration(registration.getUserData()));
+            if(registration.getUserData().isEmpty() || registration.getUserData().isBlank() || !validator.isNumberValid(registration.getUserData()))
+                return ResponseEntity.ok(HttpStatus.CONFLICT);
+            Registration mappedObj = Mapper.mapJsonToObject(registration);
+            databaseService.saveRegistration(mappedObj);
+            return ResponseEntity.ok(HttpStatus.OK);
+        } catch (Exception e){
+            return ResponseEntity.ok(HttpStatus.CONFLICT);
+        }
     }
 
     @GetMapping(path = "/registrations")
@@ -167,18 +182,24 @@ public class DataMonitoringController {
         return Encryptor.decrypt(data, encryptorProperties.getKey(), encryptorProperties.getIv());
     }
 
+    private String decryptRegistration(String data){
+        return Encryptor.decrypt(data, encryptorProperties.getKeyRegistration(), encryptorProperties.getIvRegistration());
+    }
+
     @PostMapping(path= "/alert")
     public ResponseEntity reportFugitives(@RequestBody Fugitive[] fugitivesToReport, @RequestParam(name = "token") String token){
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
         log.info("Reporting fugitives:");
-
+        List<String> fugitives = new LinkedList<>();
         for (Fugitive fugitive: fugitivesToReport){
             fugitive.setPhoneNumber(decryptUser(fugitive.getPhoneNumber()));
             log.info("{}",fugitive.toString());
+            fugitives.add(fugitive.getPhoneNumber());
         }
-
+        databaseService.markReportedFugitives(fugitivesToReport);
+        messageService.prepareAndSendEmail(fugitives.toString());
         return ResponseEntity.ok(HttpStatus.OK);
     }
 }

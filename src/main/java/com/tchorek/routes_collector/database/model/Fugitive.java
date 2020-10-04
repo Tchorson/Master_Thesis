@@ -30,8 +30,11 @@ public class Fugitive {
     @Column(name = "escape_date", nullable = false)
     private long date;
 
+    @Column(name = "is_reported")
+    private boolean isReported;
+
     @Override
     public String toString() {
-        return "Track" + phoneNumber + " " + latitude + " " + longitude+ " "+ Timer.getFullDate(date) +"\n";
+        return "Fugitive:" + phoneNumber + ", lat:" + latitude + ", lng:" + longitude+ " ,escape date: "+ Timer.getFullDate(date) +" "+ isReported +"\n";
     }
 }
