@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.monitoring.service;
 
 import com.tchorek.routes_collector.database.repositories.AdminRepository;
+import com.tchorek.routes_collector.encryption.PasswordHashing;
 import com.tchorek.routes_collector.utils.Timer;
 import lombok.Setter;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -14,10 +15,16 @@ public class LoginService {
     @Autowired
     AdminRepository adminRepository;
 
+    @Autowired
+    PasswordHashing passwordHashing;
+
     public String login(String login, String password){
         String token = RandomStringUtils.randomAlphanumeric(30);
-        adminRepository.createUserSession(login, password, token, Timer.getCurrentTimeInSeconds());
-        return token;
+        if (passwordHashing.checkPassword(login, password)){
+            adminRepository.createUserSession(login, token, Timer.getCurrentTimeInSeconds());
+            return token;
+        }
+        return null;
     }
 
     public void logout(String token){

@@ -44,7 +44,7 @@ public class UserDataController {
     @Autowired
     EncryptorProperties encryptorProperties;
 
-    @PostMapping(path = "/point", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/point", consumes = MediaType.APPLICATION_JSON_VALUE) //from python device
     public ResponseEntity saveUserLocation(@RequestBody BluetoothData data) {
         data.setUser(decryptUser(data.getUser()));
         return analyzeData(data);

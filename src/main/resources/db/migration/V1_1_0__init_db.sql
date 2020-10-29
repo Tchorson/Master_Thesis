@@ -28,5 +28,6 @@ CREATE TABLE IF NOT EXISTS public.fugitives
     latitude numeric(10,7),
     longitude numeric(10,7),
     escape_date bigint NOT NULL,
+    is_reported BOOLEAN DEFAULT false,
     CONSTRAINT fugitives_pk PRIMARY KEY (user_id)
 );

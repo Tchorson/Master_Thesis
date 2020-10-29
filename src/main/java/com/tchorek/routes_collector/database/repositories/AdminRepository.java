@@ -17,8 +17,8 @@ public interface AdminRepository extends CrudRepository<Admin,String> {
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE admins SET token = :token, timestamp = :timestamp WHERE login = :login AND password = :password", nativeQuery = true)
-    void createUserSession(@Param("login") String login, @Param("password") String password, @Param("token") String token, @Param("timestamp") long timestamp);
+    @Query(value = "UPDATE admins SET token = :token, timestamp = :timestamp WHERE login = :login", nativeQuery = true)
+    void createUserSession(@Param("login") String login,  @Param("token") String token, @Param("timestamp") long timestamp);
 
     @Transactional
     @Modifying
