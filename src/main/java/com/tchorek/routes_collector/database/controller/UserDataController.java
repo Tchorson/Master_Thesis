@@ -79,7 +79,6 @@ public class UserDataController {
         }
         phoneWithTime.setUserData(decryptUser(phoneWithTime.getUserData()));
         Set<String> users = databaseService.getUsersWhoMetUser(phoneWithTime);
-        users.remove(phoneWithTime.getUserData());
         Set<String> encryptedUsers = new LinkedHashSet<>();
         users.forEach(user -> encryptedUsers.add(encryptUser(user)));
         return ResponseEntity.ok().body(encryptedUsers);

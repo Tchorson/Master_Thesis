@@ -1,0 +1,51 @@
+Engine: fuzzylogic.fll
+InputVariable: meetingDeltaTime
+    enabled: true
+    range: 0.00 4200.00
+    lock-range: false
+    term: high Trapezoid 0 0 900 1500
+    term: medium Trapezoid 900 1500 2400 2700
+    term: low Trapezoid 2400 3000 3600 3900
+    term: lacking Trapezoid 3600 3900 4200 4200
+InputVariable: placeDeltaTime
+    enabled: true
+    range: 0.00 864000.00
+    lock-range: false
+    term: lacking Trapezoid 0 0 172800 432000
+    term: low Triangle 259200 345600 518400
+    term: medium Trapezoid 432000 518400 604800 691200
+    term: high Trapezoid 604800 777600 864000 864000
+OutputVariable: dangerlvl
+    enabled: true
+    range: 0 3
+    lock-range: false
+    aggregation: Maximum
+    defuzzifier: Centroid 100
+    default: nan
+    lock-previous: false
+    term: lacking Constant 0.0
+    term: low Constant 1.0
+    term: medium Constant 2.0
+    term: high Constant 3.0
+RuleBlock: mamdani
+    enabled: true
+    conjunction: Minimum
+    disjunction: none
+    implication: AlgebraicProduct
+    activation: General
+    rule: if meetingDeltaTime is lacking and placeDeltaTime is lacking then dangerlvl is lacking
+    rule: if meetingDeltaTime is lacking and placeDeltaTime is low then dangerlvl is lacking
+    rule: if meetingDeltaTime is lacking and placeDeltaTime is medium then dangerlvl is lacking
+    rule: if meetingDeltaTime is lacking and placeDeltaTime is high then dangerlvl is low
+    rule: if meetingDeltaTime is low and placeDeltaTime is lacking then dangerlvl is lacking
+    rule: if meetingDeltaTime is low and placeDeltaTime is low then dangerlvl is lacking
+    rule: if meetingDeltaTime is low and placeDeltaTime is medium then dangerlvl is low
+    rule: if meetingDeltaTime is low and placeDeltaTime is high then dangerlvl is low
+    rule: if meetingDeltaTime is medium and placeDeltaTime is lacking then dangerlvl is low
+    rule: if meetingDeltaTime is medium and placeDeltaTime is low then dangerlvl is low
+    rule: if meetingDeltaTime is medium and placeDeltaTime is medium then dangerlvl is medium
+    rule: if meetingDeltaTime is medium and placeDeltaTime is high then dangerlvl is high
+    rule: if meetingDeltaTime is high and placeDeltaTime is lacking then dangerlvl is high
+    rule: if meetingDeltaTime is high and placeDeltaTime is low then dangerlvl is high
+    rule: if meetingDeltaTime is high and placeDeltaTime is medium then dangerlvl is high
+    rule: if meetingDeltaTime is high and placeDeltaTime is high then dangerlvl is high

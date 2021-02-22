@@ -33,7 +33,7 @@ dependencies {
     compile group: 'org.junit.platform', name: 'junit-platform-runner', version: runner
     compile group: 'org.apache.commons', name: 'commons-lang3', version: lang3
     compile group: 'commons-codec', name: 'commons-codec', version: base64
-
+    compile group: 'com.fuzzylite', name: 'jfuzzylite', version: jfuzzy
 }
 
 dependencies {

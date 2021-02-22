@@ -199,7 +199,7 @@ public class DataMonitoringController {
             fugitives.add(fugitive.getPhoneNumber());
         }
         databaseService.markReportedFugitives(fugitivesToReport);
-        messageService.prepareAndSendEmail(fugitives.toString());
+        messageService.prepareAndSendEmail("List of today's fugitives", fugitives.toString());
         return ResponseEntity.ok(HttpStatus.OK);
     }
 }

@@ -17,7 +17,7 @@ public class MessageService {
     @Autowired
     MessageUtils messageUtils;
 
-    public void prepareAndSendEmail(String fugitives){
+    public void prepareAndSendEmail(String subject, String content){
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
@@ -30,8 +30,7 @@ public class MessageService {
             }
         };
         Session session = Session.getInstance(props, auth);
-
-        prepareMessage(session, messageUtils.getToEmail(), messageUtils.getSubject(), fugitives.replaceAll("[\\[\\]]",""));
+        prepareMessage(session, messageUtils.getToEmail(), subject, content.replaceAll("[\\[\\]]",""));
     }
 
     private void prepareMessage(Session session, String toEmail, String subject, String body){

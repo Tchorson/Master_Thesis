@@ -8,8 +8,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class MessageUtils {
 
-    private String subject = "List of today's fugitives";
-
     @Value("${SOURCE_EMAIL}")
     private String fromEmail;
 
