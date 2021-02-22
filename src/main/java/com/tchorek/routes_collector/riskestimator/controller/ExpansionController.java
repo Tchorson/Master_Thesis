@@ -40,7 +40,7 @@ public class ExpansionController {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
-        decryptUser(data.getUserData())
+        decryptUser(data.getUserData());
         Set<FuzzyModel> suspiciousPeople = riskEstimatorService.findEndangeredPeople(data.getUserData(), data.getStartDate(), data.getStopDate());
         System.out.println(suspiciousPeople.toString());
         messageService.prepareAndSendEmail("List of people containing risk of being infected", suspiciousPeople.toString());
