@@ -17,11 +17,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @RequestMapping(value = "/service")
 @Controller
-public class ExpansionController {
+public class ToolsController {
 
     @Autowired
     private EncryptorProperties encryptorProperties;
@@ -35,16 +36,22 @@ public class ExpansionController {
     @Autowired
     private MessageService messageService;
 
-    @GetMapping(path = "/warn", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity alertAllMetPeople(@RequestBody ServerData data, @RequestParam(name = "token") String token) {
+    @GetMapping(path = "/covid-detection", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity findAllRelatedPeople(@RequestBody ServerData data, @RequestParam(name = "token") String token) {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
         decryptUser(data.getUserData());
-        Set<FuzzyModel> suspiciousPeople = riskEstimatorService.findEndangeredPeople(data.getUserData(), data.getStartDate(), data.getStopDate());
-        System.out.println(suspiciousPeople.toString());
-        messageService.prepareAndSendEmail("List of people containing risk of being infected", suspiciousPeople.toString());
-        return ResponseEntity.ok(HttpStatus.ACCEPTED);
+        Set<FuzzyModel> possiblyInfected = riskEstimatorService.findEndangeredPeople(data.getUserData(), data.getStartDate(), data.getStopDate());
+        messageService.prepareAndSendEmail("List of people containing risk of being infected", possiblyInfected.toString());
+        Set<FuzzyModel> encryptedUsersData = new LinkedHashSet<>();
+        possiblyInfected.forEach(user -> encryptedUsersData.add(encryptUser(user)));
+        return ResponseEntity.ok().body(possiblyInfected);
+    }
+
+    private FuzzyModel encryptUser(FuzzyModel data) {
+        data.setUser(encryptUser(data.getUser()));
+        return data;
     }
 
     private String encryptUser(String data) {
