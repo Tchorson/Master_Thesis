@@ -12,16 +12,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 @RequestMapping(value = "/service")
 @Controller
+@CrossOrigin
 public class ToolsController {
 
     @Autowired
@@ -36,17 +34,26 @@ public class ToolsController {
     @Autowired
     private MessageService messageService;
 
-    @GetMapping(path = "/covid-detection", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/covid-detection", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity findAllRelatedPeople(@RequestBody ServerData data, @RequestParam(name = "token") String token) {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
-        decryptUser(data.getUserData());
-        Set<FuzzyModel> possiblyInfected = riskEstimatorService.findEndangeredPeople(data.getUserData(), data.getStartDate(), data.getStopDate());
-        messageService.prepareAndSendEmail("List of people containing risk of being infected", possiblyInfected.toString());
+        Set<FuzzyModel> possiblyInfected = riskEstimatorService.findEndangeredPeople(decryptUser(data.getUserData()), data.getStartDate(), data.getStopDate());
         Set<FuzzyModel> encryptedUsersData = new LinkedHashSet<>();
         possiblyInfected.forEach(user -> encryptedUsersData.add(encryptUser(user)));
-        return ResponseEntity.ok().body(possiblyInfected);
+        return ResponseEntity.ok().body(encryptedUsersData);
+    }
+
+    @PostMapping(path = "/alert", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity alertRelatedPeople(@RequestBody ServerData data, @RequestParam(name = "token") String token) {
+        if (!loginService.isTokenValid(token)) {
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        }
+        Set<FuzzyModel> possiblyInfected = riskEstimatorService.findEndangeredPeople(decryptUser(data.getUserData()), data.getStartDate(), data.getStopDate());
+        messageService.prepareAndSendEmail("List of people containing risk of being infected", possiblyInfected.toString());
+
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 
     private FuzzyModel encryptUser(FuzzyModel data) {

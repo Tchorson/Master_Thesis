@@ -30,55 +30,60 @@ public class RiskEstimatorService {
     }
 
     private Set<FuzzyModel> findAllRelatedPersons(String phone, long startDate, long stopDate) {
-        byte initialHierarchy = 0;
+        byte hierarchy = 0;
         Map<String, FuzzyModel> allRelatedUsers = new LinkedHashMap<>();
         Set<LightHistoryTrack> firstRelatedUsers = historyTrackRepository.getUsers(phone, startDate, stopDate);
         removeDuplicates(firstRelatedUsers);
-        recursiveRelatedUsersSearch(phone, firstRelatedUsers, allRelatedUsers, initialHierarchy, startDate, stopDate);
+        recursiveRelatedUsersSearch(phone, firstRelatedUsers, allRelatedUsers, hierarchy, startDate, stopDate, startDate);
         return new LinkedHashSet<>(allRelatedUsers.values());
     }
 
     private void removeDuplicates(Set<LightHistoryTrack> users) {
         users.forEach(user -> {
-                users.forEach(possibleDuplicateUser -> {
-                    if(possibleDuplicateUser.getName().equals(user.getName())){
-                        if(possibleDuplicateUser.getDate() != user.getDate() || possibleDuplicateUser.getDevice().equals(user.getDevice())){
-                            if(possibleDuplicateUser.getDate() > user.getDate()){
-                                users.remove(possibleDuplicateUser);
-                            }
+            users.forEach(possibleDuplicateUser -> {
+                if (possibleDuplicateUser.getName().equals(user.getName())) {
+                    if (possibleDuplicateUser.getDate() != user.getDate() || possibleDuplicateUser.getDevice().equals(user.getDevice())) {
+                        if (possibleDuplicateUser.getDate() > user.getDate()) {
+                            users.remove(possibleDuplicateUser);
                         }
                     }
-                });
+                }
+            });
         });
     }
 
     private void recursiveRelatedUsersSearch(String previousMetUser, Set<LightHistoryTrack> upperRelatedUsers, Map<String, FuzzyModel> allRelatedUsers,
-                                             byte hierarchy, long startDate, long stopDate) {
+                                             byte hierarchy, long startDate, long stopDate, long initialDate) {
         byte level = (byte) (hierarchy + 1);
         if (level >= 4)
             return;
-            upperRelatedUsers.forEach(
+        upperRelatedUsers.forEach(
                 relatedUser ->
                 {
+                    String name = relatedUser.getName();
                     long recentMeetingTime = relatedUser.getDate();
-                    Set<LightHistoryTrack> intermediateRelatedUsers = historyTrackRepository.getUsers(relatedUser.getName(), recentMeetingTime, stopDate);
+                    Set<LightHistoryTrack> intermediateRelatedUsers = historyTrackRepository.getUsers(name, recentMeetingTime, stopDate);
                     removeDuplicates(intermediateRelatedUsers);
-                    HistoryTracks recentMeeting = historyTrackRepository.getUserWhoMetUserRecently(previousMetUser , relatedUser.getDevice(), relatedUser.getDate());
-                    if(recentMeeting == null){
+                    HistoryTracks recentMeeting = historyTrackRepository.getUserWhoMetUserRecently(previousMetUser, relatedUser.getDevice(), relatedUser.getDate());
+                    if (recentMeeting == null) {
                         System.out.println("User has not met anyone during the chosen period of time");
                         return;
                     }
                     long meetingTimeBeforeNow = recentMeeting.getDate();
-                    long currentMeeting = relatedUser.getDate();
                     if (!intermediateRelatedUsers.isEmpty())
-                        recursiveRelatedUsersSearch(relatedUser.getName(), intermediateRelatedUsers, allRelatedUsers, level, recentMeetingTime, stopDate);
-                    if (allRelatedUsers.containsKey(relatedUser.getName())) {
-                        FuzzyModel model = allRelatedUsers.get(relatedUser.getName());
-                        if (model.getHierarchyLevel() > level || model.getHierarchyLevel() == level && currentMeeting - meetingTimeBeforeNow < model.getDeltaBetweenMeetings()) {
-                            allRelatedUsers.put(relatedUser.getName(), new FuzzyModel(relatedUser.getName(), stopDate - recentMeetingTime, currentMeeting - meetingTimeBeforeNow, level, UNKNOWN));
+                        recursiveRelatedUsersSearch(name, intermediateRelatedUsers, allRelatedUsers, level, recentMeetingTime, stopDate, initialDate);
+                    if (allRelatedUsers.containsKey(name)) {
+                        FuzzyModel model = allRelatedUsers.get(name);
+                        if (model.getHierarchyLevel() > level || model.getHierarchyLevel() == level && recentMeetingTime - meetingTimeBeforeNow < model.getDeltaBetweenMeetings()) {
+                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, recentMeetingTime - startDate, level, UNKNOWN));
                         }
                     } else {
-                            allRelatedUsers.put(relatedUser.getName(), new FuzzyModel(relatedUser.getName(), stopDate - recentMeetingTime, currentMeeting - meetingTimeBeforeNow, level, UNKNOWN));
+                        if (startDate == initialDate){
+                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, 0, level, UNKNOWN));
+                        }
+                        else{
+                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, recentMeetingTime - startDate, level, UNKNOWN));
+                        }
                     }
                 }
         );

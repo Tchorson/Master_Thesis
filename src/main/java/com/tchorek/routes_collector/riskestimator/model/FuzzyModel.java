@@ -36,9 +36,9 @@ public class FuzzyModel {
     @Override
     public String toString() {
         return "user='" + user + '\'' +
-                ", time between people [ms]" + deltaAtPlace +
+                ", time between people [s]" + deltaAtPlace +
                 ", hierarchyLevel=" + hierarchyLevel +
-                ", time between meetings [ms]" + deltaBetweenMeetings +
+                ", time between meetings [s]" + deltaBetweenMeetings +
                 ", riskLevel=" + riskLevel +
                 '\n';
     }

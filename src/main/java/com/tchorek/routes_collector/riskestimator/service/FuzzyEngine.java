@@ -22,8 +22,8 @@ import static java.lang.StrictMath.round;
 public class FuzzyEngine {
 
     private Engine engine;
+    private InputVariable placteDeltaTime;
     private InputVariable meetingDeltaTime;
-    private InputVariable placeDeltaTime;
     private OutputVariable dangerlvl;
 
     public FuzzyEngine() throws URISyntaxException {
@@ -38,19 +38,20 @@ public class FuzzyEngine {
         }
 
 
-        meetingDeltaTime = engine.getInputVariable("meetingDeltaTime");
-        placeDeltaTime = engine.getInputVariable("placeDeltaTime");
+        placteDeltaTime = engine.getInputVariable("meetingDeltaTime");
+        meetingDeltaTime = engine.getInputVariable("placeDeltaTime");
         dangerlvl = engine.getOutputVariable("dangerlvl");
     }
 
     public void estimateRiskPossibility(Set<FuzzyModel> fetchedUsers) {
         fetchedUsers.forEach(user ->
         {
-            this.meetingDeltaTime.setValue(user.getDeltaAtPlace());
-            this.placeDeltaTime.setValue(user.getDeltaBetweenMeetings());
+            this.placteDeltaTime.setValue(user.getDeltaAtPlace());
+            this.meetingDeltaTime.setValue(user.getDeltaBetweenMeetings());
             this.engine.process();
 
             double value = this.dangerlvl.getValue();
+            System.out.println("meetingDeltaTime "+user.getDeltaBetweenMeetings()+" placeDeltaTime "+ user.getDeltaAtPlace()+" risk "+value);
 
             for (RiskLevel riskLevel: RiskLevel.values()) {
                 if (riskLevel.getValue() == round(value)) {
