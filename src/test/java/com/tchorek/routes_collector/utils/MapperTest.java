@@ -23,14 +23,16 @@ class MapperTest {
     private float longitude = 50.1234567F;
     private float latitude = 20.1945131F;
     private Boolean newApproval = null;
+    private String targetPlace = "PARK_JORDANA";
     private String device = "RPI_PARK_01";
     private long currentTime = Timer.getCurrentTimeInSeconds();
+    private long returnTime = Timer.getCurrentTimeInSeconds()+3600;
 
-    private RegistrationData registrationJson = new RegistrationData(phoneNumber, currentTime, latitude, longitude);
+    private RegistrationData registrationJson = new RegistrationData(phoneNumber, targetPlace, currentTime, returnTime, latitude, longitude);
     private BluetoothData bluetoothJson = new BluetoothData(phoneNumber, device);
 
     private DailyRecord dailyRecordModel = new DailyRecord(phoneNumber, device, currentTime);
-    private Registration registrationModel = new Registration(phoneNumber,currentTime, latitude, longitude, null);
+    private Registration registrationModel = new Registration(phoneNumber, targetPlace, currentTime, returnTime, latitude, longitude, null);
 
     private Fugitive fugitive = new Fugitive(phoneNumber, latitude, longitude, currentTime, false);
     Iterable<Fugitive> fugitivesCollection = Collections.singletonList(fugitive);
@@ -46,7 +48,7 @@ class MapperTest {
         long currentTime = Timer.getCurrentTimeInSeconds();
         Assert.assertEquals(dailyRecordResult, new DailyRecord(phoneNumber, device, currentTime));
         Assert.assertEquals(fugitiveResult, new Fugitive(phoneNumber, latitude, longitude, currentTime, false));
-        Assert.assertEquals(registrationModelResult, new Registration(phoneNumber, currentTime, latitude , longitude , newApproval));
+        Assert.assertEquals(registrationModelResult, new Registration(phoneNumber, targetPlace, currentTime, returnTime, latitude , longitude , newApproval));
     }
 
     @Test
@@ -57,7 +59,7 @@ class MapperTest {
          RegistrationData registrationDataResult = Mapper.mapObjectToJson(registrationModel);
 
         Assert.assertEquals(bluetoothJsonResult, bluetoothJson);
-        Assert.assertEquals(registrationDataResult, new RegistrationData(phoneNumber, currentTime, latitude, longitude));
+        Assert.assertEquals(registrationDataResult, new RegistrationData(phoneNumber, targetPlace, currentTime, returnTime, latitude, longitude));
     }
 
     @Test

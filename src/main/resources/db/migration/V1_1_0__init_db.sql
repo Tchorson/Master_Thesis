@@ -2,6 +2,8 @@ CREATE TABLE IF NOT EXISTS user_registrations
 (
     user_id character varying(15) COLLATE pg_catalog."default" NOT NULL,
     walk_date bigint NOT NULL,
+    return_date bigint NOT NULL,
+    target_place character varying(40) NOT NULL,
     latitude numeric(10,7) NOT NULL,
     longitude numeric(10,7) NOT NULL,
     approved boolean,
@@ -31,3 +33,22 @@ CREATE TABLE IF NOT EXISTS public.fugitives
     is_reported BOOLEAN DEFAULT false,
     CONSTRAINT fugitives_pk PRIMARY KEY (user_id)
 );
+
+CREATE TABLE IF NOT EXISTS public.sick_people
+(
+    user_id character varying(15) COLLATE pg_catalog."default" NOT NULL,
+    is_reported BOOLEAN DEFAULT false,
+    report_date bigint NULL,
+    CONSTRAINT sick_people_pk PRIMARY KEY (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.registered_people
+(
+    user_id character varying(15) COLLATE pg_catalog."default" NOT NULL,
+    password character varying(100) NOT NULL,
+    email character varying(100) NOT NULL,
+    token character varying(30) NULL,
+    timestamp bigint NULL,
+    CONSTRAINT registered_people_pk PRIMARY KEY (user_id)
+)
+

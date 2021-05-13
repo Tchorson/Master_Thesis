@@ -3,6 +3,8 @@ package com.tchorek.routes_collector.database.controller;
 import com.tchorek.routes_collector.database.json.ServerData;
 import com.tchorek.routes_collector.database.model.DailyRecord;
 import com.tchorek.routes_collector.database.model.HistoryTracks;
+import com.tchorek.routes_collector.database.model.RegisteredUser;
+import com.tchorek.routes_collector.database.model.SickPerson;
 import com.tchorek.routes_collector.database.service.DatabaseService;
 import com.tchorek.routes_collector.encryption.Encryptor;
 import com.tchorek.routes_collector.encryption.EncryptorProperties;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Log4j2
@@ -115,12 +118,76 @@ public class UserDataController {
         return ResponseEntity.ok().body(encryptedUsers);
     }
 
+    @GetMapping(path = "/sick-list", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getListOfSickPeople(@RequestParam(name = "token") String token) {
+        if (!loginService.isTokenValid(token)) {
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        }
+        List<SickPerson> sickPeopleList = dataMonitoringService.getSickPeopleList();
+        sickPeopleList.forEach(user -> user.setPhoneNumber(encryptUser(user.getPhoneNumber())));
+        return ResponseEntity.ok().body(sickPeopleList);
+    }
+
+    @PostMapping(path = "/report-sick-people", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity reportSickPeople(@RequestBody List<String> ids, @RequestParam(name = "token") String token) {
+        if (!loginService.isTokenValid(token))
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        dataMonitoringService.reportSickPeople(ids);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/add-sick", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity addSickPerson(@RequestBody SickPerson newPerson, @RequestParam(name = "token") String token) {
+        if (!loginService.isTokenValid(token) && !loginService.isRegistered(newPerson.getPhoneNumber()))
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        dataMonitoringService.addSickPerson(newPerson);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/delete-user", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity deleteUser(@RequestBody RegisteredUser userToDelete) {
+        if (!loginService.isTokenValid(userToDelete.getToken())) {
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        }
+        dataMonitoringService.deleteUser(userToDelete);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/register-user", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity registerUser(@RequestBody RegisteredUser registeredUser) {
+        if (!loginService.isTokenValid(registeredUser.getToken())) {
+            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
+        }
+        dataMonitoringService.registerUser(registeredUser);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
     private ResponseEntity analyzeData(BluetoothData data) {
         String deviceName = data.getDeviceName();
         String user = data.getUser();
+        String targetPlace = databaseService.getUserTargetArea(user);
+        if(targetPlace == null){
+            log.warn("UNKNOWN USER {} ", user);
+            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+        }
+
+        if(!deviceName.contains(targetPlace)){
+            log.warn("USER {} IS IN DIFFERENT AREA {} THAN DECLARED {} ", user, deviceName, targetPlace);
+            dataMonitoringService.addNewFugitive(user);
+            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+        }
+
         if (validator.isDeviceValid(deviceName) && dataMonitoringService.checkIfUserIsRegistered(user)) {
             if (dataMonitoringService.isUserBeforeTime(user)) {
                 log.warn("USER {} ARRIVED BEFORE SCHEDULED TIME: {}", user, Timer.getCurrentTimeInSeconds());
+            }
+            Map<Long,Boolean> map = dataMonitoringService.isUserAfterTime(user);
+
+            if (map.values().stream().findFirst().get()) {
+                log.warn("USER {} IS AFTER DECLARED TIME OF RETURN. ESTIMATED TIME: {}", user,
+                        map.keySet().stream().findFirst().get());
+                dataMonitoringService.addNewFugitive(user);
+                return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
             }
 
             databaseService.saveTrackOfUser(Mapper.mapJsonToObject(data));

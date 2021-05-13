@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface RegistrationRepository extends CrudRepository<Registration, String> {
+public interface HangoutRegistrationsRepository extends CrudRepository<Registration, String> {
 
-    @Query(value = "SELECT user_id, walk_date, latitude, longitude, approved FROM user_registrations WHERE approved IS NULL", nativeQuery = true)
+    @Query(value = "SELECT user_id, walk_date, return_date, target_place, latitude, longitude, approved FROM user_registrations WHERE approved IS NULL", nativeQuery = true)
     List<Registration> getAllNewRegistrations();
 
-    @Query(value = "SELECT user_id, walk_date, latitude, longitude, approved FROM user_registrations WHERE approved = true", nativeQuery = true)
+    @Query(value = "SELECT user_id, walk_date, return_date, target_place, latitude, longitude, approved FROM user_registrations WHERE approved = true", nativeQuery = true)
     List<Registration> getAllVerifiedRegistrations();
 
     @Query(value = "SELECT DISTINCT user_id FROM user_registrations WHERE approved = true", nativeQuery = true)
@@ -25,9 +25,12 @@ public interface RegistrationRepository extends CrudRepository<Registration, Str
 
     @Modifying
     @Transactional
-    @Query(value= "DELETE FROM user_registrations WHERE approved IS NOT NULL" ,nativeQuery = true)
+    @Query(value= "DELETE FROM user_registrations WHERE approved = true" ,nativeQuery = true)
     void deleteVerifiedRegistrations();
 
     @Query(value = "SELECT COUNT(*) FROM user_registrations WHERE user_id = :user_id AND approved = true", nativeQuery = true)
     int findUserRegistration(@Param("user_id") String userId);
+
+    @Query(value = "SELECT target_place FROM user_registrations WHERE user_id = :user_id AND approved = true", nativeQuery = true)
+    String getUserRegistration(@Param("user_id") String userId);
 }

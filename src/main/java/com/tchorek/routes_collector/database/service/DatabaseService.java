@@ -2,14 +2,8 @@ package com.tchorek.routes_collector.database.service;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
 import com.tchorek.routes_collector.database.json.ServerData;
-import com.tchorek.routes_collector.database.model.DailyRecord;
-import com.tchorek.routes_collector.database.model.Fugitive;
-import com.tchorek.routes_collector.database.model.HistoryTracks;
-import com.tchorek.routes_collector.database.model.Registration;
-import com.tchorek.routes_collector.database.repositories.DailyTrackRepository;
-import com.tchorek.routes_collector.database.repositories.FugitiveRepository;
-import com.tchorek.routes_collector.database.repositories.HistoryTrackRepository;
-import com.tchorek.routes_collector.database.repositories.RegistrationRepository;
+import com.tchorek.routes_collector.database.model.*;
+import com.tchorek.routes_collector.database.repositories.*;
 import com.tchorek.routes_collector.utils.Mapper;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -29,16 +23,19 @@ import java.util.stream.Collectors;
 public class DatabaseService {
 
     DailyTrackRepository dailyTrackRepository;
-    RegistrationRepository registrationRepository;
+    HangoutRegistrationsRepository hangoutRegistrationsRepository;
     HistoryTrackRepository historyTrackRepository;
     FugitiveRepository fugitiveRepository;
+    AgentRepository agentRepository;
+
 
     @Autowired
-    public DatabaseService(DailyTrackRepository dailyTrackRepository, RegistrationRepository registrationRepository, HistoryTrackRepository historyTrackRepository, FugitiveRepository fugitiveRepository) {
+    public DatabaseService(DailyTrackRepository dailyTrackRepository, HangoutRegistrationsRepository hangoutRegistrationsRepository, HistoryTrackRepository historyTrackRepository, FugitiveRepository fugitiveRepository, AgentRepository agentRepository) {
         this.dailyTrackRepository = dailyTrackRepository;
-        this.registrationRepository = registrationRepository;
+        this.hangoutRegistrationsRepository = hangoutRegistrationsRepository;
         this.historyTrackRepository = historyTrackRepository;
         this.fugitiveRepository = fugitiveRepository;
+        this.agentRepository = agentRepository;
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -46,7 +43,19 @@ public class DatabaseService {
         log.info("Transferring daily data to history records");
         historyTrackRepository.transferDailyDataToHistory();
         dailyTrackRepository.deleteAll();
-        registrationRepository.deleteVerifiedRegistrations();
+        hangoutRegistrationsRepository.deleteVerifiedRegistrations();
+    }
+
+    public String getUserTargetArea(String targetArea){
+        return hangoutRegistrationsRepository.getUserRegistration(targetArea);
+    }
+
+    public boolean isDeviceInService(String device){
+        return agentRepository.isDeviceInDB(device) > 0;
+    }
+
+    public void saveAgent(Agent agent){
+        agentRepository.save(agent);
     }
 
     public void saveNewFugitiveInDB(RegistrationData currentUserData) {
@@ -55,15 +64,15 @@ public class DatabaseService {
     }
 
     public boolean isApprovalInDB(Registration approval) {
-        return registrationRepository.findById(approval.getPhoneNumber()).isPresent();
+        return hangoutRegistrationsRepository.findById(approval.getPhoneNumber()).isPresent();
     }
 
     public List<Registration> getAllNewRegistrations() {
-        return registrationRepository.getAllNewRegistrations();
+        return hangoutRegistrationsRepository.getAllNewRegistrations();
     }
 
     public Set<String> getAllApprovedUsers() {
-        return registrationRepository.getAllApprovedUsers();
+        return hangoutRegistrationsRepository.getAllApprovedUsers();
     }
 
     public List<HistoryTracks> getUserHistory(String user) {
@@ -74,8 +83,8 @@ public class DatabaseService {
         dailyTrackRepository.save(userDailyRecord);
     }
 
-    public void saveRegistration(Registration registration) {
-        registrationRepository.save(registration);
+    public void saveUserActivityData(Registration registration) {
+        hangoutRegistrationsRepository.save(registration);
     }
 
     public Iterable<Fugitive> getAllFugitives() {
@@ -88,7 +97,7 @@ public class DatabaseService {
     }
 
     public Iterable<Registration> getAllRegisteredUsers() {
-        return registrationRepository.findAll();
+        return hangoutRegistrationsRepository.findAll();
     }
 
     public Set<String> getUsersWhoMetUser(ServerData userData) {
@@ -128,5 +137,9 @@ public class DatabaseService {
         users.addAll(dailyData);
         users.addAll(historicalData);
         return users;
+    }
+
+    public List<Agent> getDevicesFromArea(String targetArea){
+        return agentRepository.getDevicesFromSpecificArea(targetArea);
     }
 }

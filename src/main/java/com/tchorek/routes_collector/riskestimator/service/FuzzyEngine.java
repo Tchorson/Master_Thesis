@@ -51,7 +51,6 @@ public class FuzzyEngine {
             this.engine.process();
 
             double value = this.dangerlvl.getValue();
-            System.out.println("meetingDeltaTime "+user.getDeltaBetweenMeetings()+" placeDeltaTime "+ user.getDeltaAtPlace()+" risk "+value);
 
             for (RiskLevel riskLevel: RiskLevel.values()) {
                 if (riskLevel.getValue() == round(value)) {

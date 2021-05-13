@@ -15,13 +15,17 @@ public class Validator {
 
     private final String PHONE_PATTERN = "^[0-9]{9}";
     private final String DEVICE_PATTERN = "^[A-Z]{3,}_[A-Z0-9]{3,}_[0-9]{2}$";
+    private final String SECOND_DEVICE_PATTERN = "^[A-Z]{3,}_[A-Z0-9]{3,}_[A-Z0-9]{3,}_[0-9]{2}$";
     private final String SPLITTER = "_";
     private final byte DEVICE_TYPE_INDEX = 0;
     private final byte LOCATION_INDEX = 1;
 
     Pattern registrationPattern = Pattern.compile(PHONE_PATTERN);
     Pattern devicePattern = Pattern.compile(DEVICE_PATTERN, Pattern.CASE_INSENSITIVE);
+    Pattern secondDevicePattern = Pattern.compile(SECOND_DEVICE_PATTERN, Pattern.CASE_INSENSITIVE);
+
     Matcher patternMatcher;
+    Matcher secondPatternMatcher;
 
     public boolean isNumberValid(String number){ //not mandatory: add verification if user's number is allowed to register.
         patternMatcher = registrationPattern.matcher(number);
@@ -34,8 +38,9 @@ public class Validator {
 
     public boolean isDeviceValid(String deviceName) {
         patternMatcher = devicePattern.matcher(deviceName);
-        if (patternMatcher.matches()) {
-            return isDeviceFake(deviceName);
+        secondPatternMatcher = secondDevicePattern.matcher(deviceName);
+        if (patternMatcher.matches() || secondPatternMatcher.matches()) {
+            return true;
         } else {
             log.warn("DEVICE {} DOES NOT MATCH THE PATTERN", deviceName);
             return false;

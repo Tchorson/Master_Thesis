@@ -1,7 +1,9 @@
 package com.tchorek.routes_collector.encryption;
 
 import com.tchorek.routes_collector.database.model.Admin;
+import com.tchorek.routes_collector.database.model.RegisteredUser;
 import com.tchorek.routes_collector.database.repositories.AdminRepository;
+import com.tchorek.routes_collector.database.repositories.UserRegistrationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -22,13 +24,22 @@ public class PasswordHashing {
     @Autowired
     AdminRepository adminRepository;
 
+    @Autowired
+    UserRegistrationRepository userRegistrationRepository;
+
     @PostConstruct
     public void init() {
         adminRepository.save(new Admin(adminLogin, BCrypt.hashpw(adminPassword, BCrypt.gensalt(10)), null, null));
     }
 
-    public boolean checkPassword(String login, String password){
+    public boolean checkAdminPassword(String login, String password){
         Optional<Admin> credentials = adminRepository.findById(login);
+        System.out.println(BCrypt.checkpw(password, credentials.get().getPassword()));
+        return credentials.isPresent() && BCrypt.checkpw(password, credentials.get().getPassword());
+    }
+
+    public boolean checkUserPassword(String login, String password){
+        Optional<RegisteredUser> credentials = userRegistrationRepository.findById(login);
         return credentials.isPresent() && BCrypt.checkpw(password, credentials.get().getPassword());
     }
 }

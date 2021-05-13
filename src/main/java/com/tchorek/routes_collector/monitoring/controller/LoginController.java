@@ -24,6 +24,28 @@ public class LoginController {
     EncryptorProperties encryptorProperties;
 
     @ResponseBody
+    @PostMapping(path = "/adminlogin", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity loginAdmin(@RequestBody Admin credentials) {
+        String decryptedLogin = decrypt(credentials.getLogin());
+        String decryptedPassword = decrypt(credentials.getPassword());
+
+        log.info("Login attempt for user {}", decryptedLogin);
+
+        if (!loginService.isRegistered(decryptedLogin)) {
+            return ResponseEntity.ok(HttpStatus.NOT_FOUND);
+        }
+
+        if (loginService.isAdminLogged(decryptedLogin, decryptedPassword))
+            return ResponseEntity.ok(HttpStatus.IM_USED);
+
+        try {
+            return ResponseEntity.ok().body(loginService.adminLogin(decryptedLogin, decryptedPassword));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @ResponseBody
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity loginUser(@RequestBody Admin credentials) {
         String decryptedLogin = decrypt(credentials.getLogin());
@@ -35,11 +57,11 @@ public class LoginController {
             return ResponseEntity.ok(HttpStatus.NOT_FOUND);
         }
 
-        if (loginService.isLogged(decryptedLogin, decryptedPassword))
+        if (loginService.isUserLogged(decryptedLogin, decryptedPassword))
             return ResponseEntity.ok(HttpStatus.IM_USED);
 
         try {
-            return ResponseEntity.ok().body(loginService.login(decryptedLogin, decryptedPassword));
+            return ResponseEntity.ok().body(loginService.userLogin(decryptedLogin, decryptedPassword));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpStatus.NOT_FOUND);
         }

@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.monitoring.service;
 
 import com.tchorek.routes_collector.database.repositories.AdminRepository;
+import com.tchorek.routes_collector.database.repositories.UserRegistrationRepository;
 import com.tchorek.routes_collector.encryption.PasswordHashing;
 import com.tchorek.routes_collector.utils.Timer;
 import lombok.Setter;
@@ -18,10 +19,22 @@ public class LoginService {
     @Autowired
     PasswordHashing passwordHashing;
 
-    public String login(String login, String password){
+    @Autowired
+    UserRegistrationRepository userRegistrationRepository;
+
+    public String adminLogin(String login, String password){
         String token = RandomStringUtils.randomAlphanumeric(30);
-        if (passwordHashing.checkPassword(login, password)){
+        if (passwordHashing.checkAdminPassword(login, password)){
             adminRepository.createUserSession(login, token, Timer.getCurrentTimeInSeconds());
+            return token;
+        }
+        return null;
+    }
+
+    public String userLogin(String login, String password){
+        String token = RandomStringUtils.randomAlphanumeric(30);
+        if (passwordHashing.checkUserPassword(login, password)){
+            userRegistrationRepository.createUserSession(login, token, Timer.getCurrentTimeInSeconds());
             return token;
         }
         return null;
@@ -29,22 +42,29 @@ public class LoginService {
 
     public void logout(String token){
         adminRepository.removeUserSession(token);
+        userRegistrationRepository.removeUserSession(token);
     }
 
-    public boolean isLogged(String login, String password){
+    public boolean isAdminLogged(String login, String password){
         return adminRepository.getUserToken(login, password) != null && adminRepository.getUserToken(login, password).length() > 0;
+    }
+
+    public boolean isUserLogged(String login, String password){
+        return userRegistrationRepository.getUserToken(login, password) != null && adminRepository.getUserToken(login, password).length() > 0;
     }
 
     public boolean isTokenValid(String token){
         String test = adminRepository.findUserSession(token);
-        return test != null && !test.isEmpty() && !test.isBlank();
+        String test2 = userRegistrationRepository.findUserSession(token);
+        return  test != null && !test.isEmpty() && !test.isBlank() || test2 != null && !test2.isEmpty() && !test2.isBlank();
     }
 
     public boolean isRegistered(String login){
-        return adminRepository.findById(login).isPresent();
+        return adminRepository.findById(login).isPresent() || userRegistrationRepository.findById(login).isPresent();
     }
 
     public void extendUserSession(String token) {
         adminRepository.updateUserSessionTimestamp(Timer.getCurrentTimeInSeconds(), token);
+        userRegistrationRepository.updateUserSessionTimestamp(Timer.getCurrentTimeInSeconds(), token);
     }
 }

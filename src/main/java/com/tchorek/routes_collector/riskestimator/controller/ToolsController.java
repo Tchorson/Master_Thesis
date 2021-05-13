@@ -39,7 +39,8 @@ public class ToolsController {
         if (!loginService.isTokenValid(token)) {
             return ResponseEntity.ok(HttpStatus.FORBIDDEN);
         }
-        Set<FuzzyModel> possiblyInfected = riskEstimatorService.findEndangeredPeople(decryptUser(data.getUserData()), data.getStartDate(), data.getStopDate());
+        Set<FuzzyModel> possiblyInfected = riskEstimatorService.findEndangeredPeople(
+                decryptUser(data.getUserData()), data.getStartDate(), data.getStopDate());
         Set<FuzzyModel> encryptedUsersData = new LinkedHashSet<>();
         possiblyInfected.forEach(user -> encryptedUsersData.add(encryptUser(user)));
         return ResponseEntity.ok().body(encryptedUsersData);

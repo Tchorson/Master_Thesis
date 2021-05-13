@@ -74,16 +74,15 @@ public class RiskEstimatorService {
                         recursiveRelatedUsersSearch(name, intermediateRelatedUsers, allRelatedUsers, level, recentMeetingTime, stopDate, initialDate);
                     if (allRelatedUsers.containsKey(name)) {
                         FuzzyModel model = allRelatedUsers.get(name);
-                        if (model.getHierarchyLevel() > level || model.getHierarchyLevel() == level && recentMeetingTime - meetingTimeBeforeNow < model.getDeltaBetweenMeetings()) {
-                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, recentMeetingTime - startDate, level, UNKNOWN));
-                        }
+                        if (model.getHierarchyLevel() > level || model.getHierarchyLevel() == level && recentMeetingTime - meetingTimeBeforeNow < model.getDeltaBetweenMeetings())
+                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, recentMeetingTime - startDate,
+                                    level, UNKNOWN));
                     } else {
-                        if (startDate == initialDate){
+                        if (startDate == initialDate)
                             allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, 0, level, UNKNOWN));
-                        }
-                        else{
-                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, recentMeetingTime - startDate, level, UNKNOWN));
-                        }
+                        else
+                            allRelatedUsers.put(name, new FuzzyModel(name, recentMeetingTime - meetingTimeBeforeNow, recentMeetingTime - startDate,
+                                    level, UNKNOWN));
                     }
                 }
         );

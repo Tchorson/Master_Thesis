@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.monitoring.controller;
 
 import com.tchorek.routes_collector.database.json.RegistrationData;
+import com.tchorek.routes_collector.database.model.Agent;
 import com.tchorek.routes_collector.database.model.Fugitive;
 import com.tchorek.routes_collector.database.model.Registration;
 import com.tchorek.routes_collector.database.service.DatabaseService;
@@ -31,6 +32,9 @@ import java.util.Set;
 @Controller
 @CrossOrigin
 public class DataMonitoringController {
+
+    private final float MARGIN_OF_GPS_ERROR = 0.0005F;
+    boolean isInReach;
 
     @Autowired
     DataMonitoringService dataMonitoringService;
@@ -103,13 +107,50 @@ public class DataMonitoringController {
     }
 
     @PutMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity registerUser(@RequestBody RegistrationData registration) {
+    public ResponseEntity registerUserHangout(@RequestBody RegistrationData registration) {
         try{
             registration.setUserData(decryptRegistration(registration.getUserData()));
             if(registration.getUserData().isEmpty() || registration.getUserData().isBlank() || !validator.isNumberValid(registration.getUserData()))
                 return ResponseEntity.ok(HttpStatus.CONFLICT);
             Registration mappedObj = Mapper.mapJsonToObject(registration);
-            databaseService.saveRegistration(mappedObj);
+            if(!isTargetPlaceInReach(mappedObj) || isUserSick(registration.getUserData()))
+                mappedObj.setApproved(false);
+
+            databaseService.saveUserActivityData(mappedObj);
+            return ResponseEntity.ok(HttpStatus.OK);
+        } catch (Exception e){
+            return ResponseEntity.ok(HttpStatus.CONFLICT);
+        }
+    }
+
+    private boolean isUserSick(String id){
+        return dataMonitoringService.isUserReported(id);
+    }
+
+    private boolean isTargetPlaceInReach(Registration objToVerivy){
+        isInReach = false;
+        Float targetLat = objToVerivy.getLatitude();
+        Float targetLng = objToVerivy.getLongitude();
+        List<Agent> devices =  databaseService.getDevicesFromArea(objToVerivy.getTargetPlace());
+        devices.forEach(
+                device -> {
+                    if (Math.abs(targetLat - device.getLatitude()) < MARGIN_OF_GPS_ERROR
+                            && Math.abs(targetLng - device.getLongitude()) < MARGIN_OF_GPS_ERROR)
+                        isInReach = true;
+                }
+        );
+
+        return isInReach;
+    }
+
+    @PutMapping(path = "/register-device", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity registerUserHangout(@RequestBody Agent agent) {
+        try{
+            if(!databaseService.isDeviceInService(agent.getDeviceName()))
+                return ResponseEntity.ok(HttpStatus.NOT_FOUND);
+            if(agent.getDeviceName().isEmpty() || agent.getDeviceName().isBlank() || !validator.isDeviceValid(agent.getDeviceName()))
+                return ResponseEntity.ok(HttpStatus.CONFLICT);
+            databaseService.saveAgent(agent);
             return ResponseEntity.ok(HttpStatus.OK);
         } catch (Exception e){
             return ResponseEntity.ok(HttpStatus.CONFLICT);
@@ -136,8 +177,8 @@ public class DataMonitoringController {
             if (databaseService.isApprovalInDB(decision)) {
                 log.info("APPROVING {}", decision.getPhoneNumber());
                 //Todo: Send sms service depending on whether the timestamp has been altered or not
-                databaseService.saveRegistration(decision);
-                dataMonitoringService.logRegistration(decision);
+                databaseService.saveUserActivityData(decision);
+                dataMonitoringService.logUserActivityTime(decision);
             } else
                 log.warn("DENIED APPROVAL FOR UNKNOWN USER {}", decision.getPhoneNumber());
         }

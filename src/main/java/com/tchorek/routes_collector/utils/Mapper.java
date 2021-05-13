@@ -22,11 +22,11 @@ public class Mapper {
     }
 
     public static Registration mapJsonToObject(RegistrationData input){
-        return new Registration(input.getUserData(), input.getDate(), input.getLatitude(), input.getLongitude(), NEW_APPROVAL);
+        return new Registration(input.getUserData(), input.getTargetPlace(), input.getDate(), input.getReturnDate(), input.getLatitude(), input.getLongitude(), NEW_APPROVAL);
     }
 
     public static RegistrationData mapObjectToJson(Registration input){
-        return new RegistrationData(input.getPhoneNumber(), input.getWalkTimestamp(), input.getLatitude(), input.getLongitude());
+        return new RegistrationData(input.getPhoneNumber(), input.getTargetPlace(), input.getWalkTimestamp(), input.getReturnDate(), input.getLatitude(), input.getLongitude());
     }
 
     public static Fugitive mapJsonToFugitive(RegistrationData input){

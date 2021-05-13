@@ -20,21 +20,29 @@ public class RegistrationData {
     private long date;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private long returnDate;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private String targetPlace;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Float latitude;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Float longitude;
 
     @JsonCreator
-    public RegistrationData(@JsonProperty("userData") String userData, @JsonProperty("registrationDate") long date, @JsonProperty("lat") Float latitude, @JsonProperty("lng") Float longitude) {
+    public RegistrationData(@JsonProperty("userData") String userData, @JsonProperty("targetPlace") String targetPlace, @JsonProperty("registrationDate") long date, @JsonProperty("registrationDate") long returnDate, @JsonProperty("lat") Float latitude, @JsonProperty("lng") Float longitude) {
         this.userData = userData;
         this.date = date;
+        this.returnDate = returnDate;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.targetPlace = targetPlace;
     }
 
     @Override
     public String toString() {
-        return "Registration user " + userData +" " + Timer.getFullDate(date) + " lat: " + latitude +" lng: " + longitude;
+        return "Registration user " + userData +" " + Timer.getFullDate(date) + ", return date: " + Timer.getFullDate(returnDate) + " lat: " + latitude +" lng: " + longitude;
     }
 }
