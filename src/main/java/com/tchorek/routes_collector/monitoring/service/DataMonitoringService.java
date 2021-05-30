@@ -9,6 +9,7 @@ import javassist.NotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -128,6 +129,7 @@ public class DataMonitoringService {
     }
 
     public void registerUser(RegisteredUser user){
+        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt(10)));
         userRegistrationRepository.save(user);
         registeredUsers.add(user);
     }

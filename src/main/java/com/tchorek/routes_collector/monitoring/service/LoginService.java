@@ -31,7 +31,7 @@ public class LoginService {
         return null;
     }
 
-    public String userLogin(String login, String password){
+    public String generateToken (String login, String password){
         String token = RandomStringUtils.randomAlphanumeric(30);
         if (passwordHashing.checkUserPassword(login, password)){
             userRegistrationRepository.createUserSession(login, token, Timer.getCurrentTimeInSeconds());

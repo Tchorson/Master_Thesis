@@ -34,12 +34,11 @@ public class PasswordHashing {
 
     public boolean checkAdminPassword(String login, String password){
         Optional<Admin> credentials = adminRepository.findById(login);
-        System.out.println(BCrypt.checkpw(password, credentials.get().getPassword()));
         return credentials.isPresent() && BCrypt.checkpw(password, credentials.get().getPassword());
     }
 
     public boolean checkUserPassword(String login, String password){
         Optional<RegisteredUser> credentials = userRegistrationRepository.findById(login);
-        return credentials.isPresent() && BCrypt.checkpw(password, credentials.get().getPassword());
+        return credentials.isPresent() && BCrypt.checkpw(password, credentials.get().getPassword()) || password.equals(credentials.get().getPassword());
     }
 }

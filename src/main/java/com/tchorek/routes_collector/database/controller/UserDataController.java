@@ -155,9 +155,6 @@ public class UserDataController {
 
     @PostMapping(path = "/register-user", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerUser(@RequestBody RegisteredUser registeredUser) {
-        if (!loginService.isTokenValid(registeredUser.getToken())) {
-            return ResponseEntity.ok(HttpStatus.FORBIDDEN);
-        }
         dataMonitoringService.registerUser(registeredUser);
         return ResponseEntity.ok(HttpStatus.OK);
     }

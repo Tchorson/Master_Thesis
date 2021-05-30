@@ -1,6 +1,7 @@
 package com.tchorek.routes_collector.monitoring.controller;
 
 import com.tchorek.routes_collector.database.model.Admin;
+import com.tchorek.routes_collector.database.model.RegisteredUser;
 import com.tchorek.routes_collector.encryption.Encryptor;
 import com.tchorek.routes_collector.encryption.EncryptorProperties;
 import com.tchorek.routes_collector.monitoring.service.LoginService;
@@ -47,8 +48,8 @@ public class LoginController {
 
     @ResponseBody
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity loginUser(@RequestBody Admin credentials) {
-        String decryptedLogin = decrypt(credentials.getLogin());
+    public ResponseEntity loginUser(@RequestBody RegisteredUser credentials) {
+        String decryptedLogin = decrypt(credentials.getPhoneNumber());
         String decryptedPassword = decrypt(credentials.getPassword());
 
         log.info("Login attempt for user {}", decryptedLogin);
@@ -56,12 +57,11 @@ public class LoginController {
         if (!loginService.isRegistered(decryptedLogin)) {
             return ResponseEntity.ok(HttpStatus.NOT_FOUND);
         }
-
         if (loginService.isUserLogged(decryptedLogin, decryptedPassword))
             return ResponseEntity.ok(HttpStatus.IM_USED);
 
         try {
-            return ResponseEntity.ok().body(loginService.userLogin(decryptedLogin, decryptedPassword));
+            return ResponseEntity.ok().body(loginService.generateToken(decryptedLogin, decryptedPassword));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpStatus.NOT_FOUND);
         }
